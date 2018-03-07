@@ -1,0 +1,11 @@
+#placeholder-bubble, #placeholder-line {
+  margin-top: 20px;
+  width: 100%;
+  height: 768px;
+}
+#instructions {
+  font-size: 12px;
+}
+* {
+  font-family: sans-serif;
+}

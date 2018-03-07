@@ -1,0 +1,227 @@
+<!doctype html>
+<html>
+
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+  <title>Vizabi Testing</title>
+  <script src="https://d3js.org/d3.v4.js"></script>
+  <link href="style.css" rel="stylesheet" type="text/css" >
+  <link href="libs/vizabi.css" rel="stylesheet" type="text/css" >
+  <link href="libs/bubblechart.css" rel="stylesheet" type="text/css">
+  <link href="libs/linechart.css" rel="stylesheet" type="text/css">
+  <script src="libs/vizabi.js"></script>
+  <script src="libs/bubblechart.js"></script>
+  <script src="libs/linechart.js"></script>
+  <script src="libs/vizabi-ddfcsv-reader.js"></script>
+  <script src="libs/vizabi-ws-reader.js"></script>
+</head>
+
+<body>
+  <p id="instructions">Y = develop, X = stage. If bubbles are on the diagonal y=x, that means no change. Shortcuts: [ and ]</p>
+  
+  <select id="concepts_selector" onchange="update_chart();">
+    <option value="" selected="selected">--- pick an indicator to compare ---</option>
+    
+    <option value="agricultural_land_percent_of_land_area">agricultural_land_percent_of_land_area</option>
+    <option value="agriculture_percent_of_gdp">agriculture_percent_of_gdp</option>
+    <option value="aid_received_per_person_current_us">aid_received_per_person_current_us</option>
+    <option value="aid_received_percent_of_gni">aid_received_percent_of_gni</option>
+    <option value="aid_received_total_us_inflation_adjusted">aid_received_total_us_inflation_adjusted</option>
+    <option value="alternative_gdp_per_capita_ppp_wb">alternative_gdp_per_capita_ppp_wb</option>
+    <option value="alternative_poverty_percent_below_nationally_defined_poverty">alternative_poverty_percent_below_nationally_defined_poverty</option>
+    <option value="armed_forces_personnel_percent_of_labor_force">armed_forces_personnel_percent_of_labor_force</option>
+    <option value="armed_forces_personnel_total">armed_forces_personnel_total</option>
+    <option value="arms_exports_us_inflation_adjusted">arms_exports_us_inflation_adjusted</option>
+    <option value="arms_imports_us_inflation_adjusted">arms_imports_us_inflation_adjusted</option>
+    <option value="births_attended_by_skilled_health_staff_percent_of_total">births_attended_by_skilled_health_staff_percent_of_total</option>
+    <option value="broadband_subscribers">broadband_subscribers</option>
+    <option value="broadband_subscribers_per_100_people">broadband_subscribers_per_100_people</option>
+    <option value="cell_phones_per_100_people">cell_phones_per_100_people</option>
+    <option value="cell_phones_total">cell_phones_total</option>
+    <option value="children_and_elderly_per_100_adults">children_and_elderly_per_100_adults</option>
+    <option value="children_out_of_school_primary">children_out_of_school_primary</option>
+    <option value="children_out_of_school_primary_female">children_out_of_school_primary_female</option>
+    <option value="children_out_of_school_primary_male">children_out_of_school_primary_male</option>
+    <option value="co2_emissions_tonnes_per_person">co2_emissions_tonnes_per_person</option>
+    <option value="co2_intensity_of_economic_output_kg_co2_per_2005_ppp_of_gdp">co2_intensity_of_economic_output_kg_co2_per_2005_ppp_of_gdp</option>
+    <option value="co2_intensity_of_economic_output_kg_co2_per_2011_ppp_of_gdp">co2_intensity_of_economic_output_kg_co2_per_2011_ppp_of_gdp</option>
+    <option value="contraceptive_use_percent_of_women_ages_15_49">contraceptive_use_percent_of_women_ages_15_49</option>
+    <option value="crude_death_rate_deaths_per_1000_population">crude_death_rate_deaths_per_1000_population</option>
+    <option value="cumulative_co2_emissions_tonnes">cumulative_co2_emissions_tonnes</option>
+    <option value="debt_servicing_costs_percent_of_exports_and_net_income_from_abroad">debt_servicing_costs_percent_of_exports_and_net_income_from_abroad</option>
+    <option value="debt_to_foreigners_by_public_and_private_percent_of_gni">debt_to_foreigners_by_public_and_private_percent_of_gni</option>
+    <option value="electricity_use_per_person">electricity_use_per_person</option>
+    <option value="energy_use_per_person">energy_use_per_person</option>
+    <option value="expenditure_per_student_primary_percent_of_gdp_per_person">expenditure_per_student_primary_percent_of_gdp_per_person</option>
+    <option value="expenditure_per_student_secondary_percent_of_gdp_per_person">expenditure_per_student_secondary_percent_of_gdp_per_person</option>
+    <option value="expenditure_per_student_tertiary_percent_of_gdp_per_person">expenditure_per_student_tertiary_percent_of_gdp_per_person</option>
+    <option value="exports_percent_of_gdp">exports_percent_of_gdp</option>
+    <option value="exports_unit_value_index_2000100">exports_unit_value_index_2000100</option>
+    <option value="external_debt_total_us_not_inflation_adjusted">external_debt_total_us_not_inflation_adjusted</option>
+    <option value="extreme_poverty_percent_people_below_125_a_day">extreme_poverty_percent_people_below_125_a_day</option>
+    <option value="extreme_poverty_percent_people_below_190_a_day">extreme_poverty_percent_people_below_190_a_day</option>
+    <option value="female_population_with_projections">female_population_with_projections</option>
+    <option value="foreign_direct_investment_net_inflows_percent_of_gdp">foreign_direct_investment_net_inflows_percent_of_gdp</option>
+    <option value="foreign_direct_investment_net_outflows_percent_of_gdp">foreign_direct_investment_net_outflows_percent_of_gdp</option>
+    <option value="forest_area_sq_km">forest_area_sq_km</option>
+    <option value="gapminder_gini">gapminder_gini</option>
+    <option value="gdppercapita_growth_percent_per_year">gdppercapita_growth_percent_per_year</option>
+    <option value="gdppercapita_us_inflation_adjusted">gdppercapita_us_inflation_adjusted</option>
+    <option value="gnipercapita_atlasmethod_current_us">gnipercapita_atlasmethod_current_us</option>
+    <option value="gnipercapita_constant_2000_us">gnipercapita_constant_2000_us</option>
+    <option value="gnipercapita_constant_2010_us">gnipercapita_constant_2010_us</option>
+    <option value="gnipercapita_ppp_current_international">gnipercapita_ppp_current_international</option>
+    <option value="high_technology_exports_percent_of_manufactured_exports">high_technology_exports_percent_of_manufactured_exports</option>
+    <option value="imports_percent_of_gdp">imports_percent_of_gdp</option>
+    <option value="imports_unit_value_index_2000100">imports_unit_value_index_2000100</option>
+    <option value="improved_sanitation_overall_access_percent">improved_sanitation_overall_access_percent</option>
+    <option value="improved_sanitation_rural_access_percent">improved_sanitation_rural_access_percent</option>
+    <option value="improved_sanitation_urban_access_percent">improved_sanitation_urban_access_percent</option>
+    <option value="improved_water_source_overall_access_percent">improved_water_source_overall_access_percent</option>
+    <option value="improved_water_source_rural_access_percent">improved_water_source_rural_access_percent</option>
+    <option value="improved_water_source_urban_access_percent">improved_water_source_urban_access_percent</option>
+    <option value="income_mountains">income_mountains</option>
+    <option value="income_per_person_gdppercapita_ppp_inflation_adjusted">income_per_person_gdppercapita_ppp_inflation_adjusted</option>
+    <option value="income_share_of_2nd_poorest_20percent">income_share_of_2nd_poorest_20percent</option>
+    <option value="income_share_of_2nd_richest_20percent">income_share_of_2nd_richest_20percent</option>
+    <option value="income_share_of_middle_20percent">income_share_of_middle_20percent</option>
+    <option value="income_share_of_poorest_10percent">income_share_of_poorest_10percent</option>
+    <option value="income_share_of_poorest_20percent">income_share_of_poorest_20percent</option>
+    <option value="income_share_of_richest_10percent">income_share_of_richest_10percent</option>
+    <option value="income_share_of_richest_20percent">income_share_of_richest_20percent</option>
+    <option value="industry_percent_of_gdp">industry_percent_of_gdp</option>
+    <option value="inequality_index_gini">inequality_index_gini</option>
+    <option value="inflation_annual_percent">inflation_annual_percent</option>
+    <option value="internet_users_per_100_people">internet_users_per_100_people</option>
+    <option value="investments_percent_of_gdp">investments_percent_of_gdp</option>
+    <option value="life_expectancy_female">life_expectancy_female</option>
+    <option value="life_expectancy_male">life_expectancy_male</option>
+    <option value="life_expectancy_years">life_expectancy_years</option>
+    <option value="male_population_with_projections">male_population_with_projections</option>
+    <option value="malnutrition_weight_for_age_percent_of_children_under_5">malnutrition_weight_for_age_percent_of_children_under_5</option>
+    <option value="market_value_of_listed_companies_percent_of_gdp">market_value_of_listed_companies_percent_of_gdp</option>
+    <option value="mean_years_in_school_men_15_to_24_years">mean_years_in_school_men_15_to_24_years</option>
+    <option value="mean_years_in_school_men_25_to_34_years">mean_years_in_school_men_25_to_34_years</option>
+    <option value="mean_years_in_school_men_35_to_44_years">mean_years_in_school_men_35_to_44_years</option>
+    <option value="mean_years_in_school_men_45_to_54_years">mean_years_in_school_men_45_to_54_years</option>
+    <option value="mean_years_in_school_men_55_to_64_years">mean_years_in_school_men_55_to_64_years</option>
+    <option value="mean_years_in_school_men_65_plus_years">mean_years_in_school_men_65_plus_years</option>
+    <option value="mean_years_in_school_women_15_to_24_years">mean_years_in_school_women_15_to_24_years</option>
+    <option value="mean_years_in_school_women_25_to_34_years">mean_years_in_school_women_25_to_34_years</option>
+    <option value="mean_years_in_school_women_35_to_44_years">mean_years_in_school_women_35_to_44_years</option>
+    <option value="mean_years_in_school_women_45_to_54_years">mean_years_in_school_women_45_to_54_years</option>
+    <option value="mean_years_in_school_women_55_to_64_years">mean_years_in_school_women_55_to_64_years</option>
+    <option value="mean_years_in_school_women_65_plus_years">mean_years_in_school_women_65_plus_years</option>
+    <option value="mean_years_in_school_women_percent_men_25_to_34_years">mean_years_in_school_women_percent_men_25_to_34_years</option>
+    <option value="median_age_years">median_age_years</option>
+    <option value="medical_doctors_per_1000_people">medical_doctors_per_1000_people</option>
+    <option value="merchandise_trade_percent_of_gdp">merchandise_trade_percent_of_gdp</option>
+    <option value="military_expenditure_percent_of_gdp">military_expenditure_percent_of_gdp</option>
+    <option value="net_barter_terms_of_trade_2000_100">net_barter_terms_of_trade_2000_100</option>
+    <option value="population_aged_0_4_years_both_sexes_percent">population_aged_0_4_years_both_sexes_percent</option>
+    <option value="population_aged_0_4_years_female_percent">population_aged_0_4_years_female_percent</option>
+    <option value="population_aged_0_4_years_male_percent">population_aged_0_4_years_male_percent</option>
+    <option value="population_aged_0_4_years_total_number">population_aged_0_4_years_total_number</option>
+    <option value="population_aged_10_14_years_both_sexes_percent">population_aged_10_14_years_both_sexes_percent</option>
+    <option value="population_aged_10_14_years_female_percent">population_aged_10_14_years_female_percent</option>
+    <option value="population_aged_10_14_years_male_percent">population_aged_10_14_years_male_percent</option>
+    <option value="population_aged_10_14_years_total_number">population_aged_10_14_years_total_number</option>
+    <option value="population_aged_15_19_years_both_sexes_percent">population_aged_15_19_years_both_sexes_percent</option>
+    <option value="population_aged_15_19_years_female_percent">population_aged_15_19_years_female_percent</option>
+    <option value="population_aged_15_19_years_male_percent">population_aged_15_19_years_male_percent</option>
+    <option value="population_aged_15_19_years_total_number">population_aged_15_19_years_total_number</option>
+    <option value="population_aged_20_39_years_both_sexes_percent">population_aged_20_39_years_both_sexes_percent</option>
+    <option value="population_aged_20_39_years_female_percent">population_aged_20_39_years_female_percent</option>
+    <option value="population_aged_20_39_years_male_percent">population_aged_20_39_years_male_percent</option>
+    <option value="population_aged_20_39_years_total_number">population_aged_20_39_years_total_number</option>
+    <option value="population_aged_40_59_years_both_sexes_percent">population_aged_40_59_years_both_sexes_percent</option>
+    <option value="population_aged_40_59_years_female_percent">population_aged_40_59_years_female_percent</option>
+    <option value="population_aged_40_59_years_male_percent">population_aged_40_59_years_male_percent</option>
+    <option value="population_aged_40_59_years_total_number">population_aged_40_59_years_total_number</option>
+    <option value="population_aged_5_9_years_both_sexes_percent">population_aged_5_9_years_both_sexes_percent</option>
+    <option value="population_aged_5_9_years_female_percent">population_aged_5_9_years_female_percent</option>
+    <option value="population_aged_5_9_years_male_percent">population_aged_5_9_years_male_percent</option>
+    <option value="population_aged_5_9_years_total_number">population_aged_5_9_years_total_number</option>
+    <option value="population_aged_60plus_years_both_sexes_percent">population_aged_60plus_years_both_sexes_percent</option>
+    <option value="population_aged_60plus_years_female_percent">population_aged_60plus_years_female_percent</option>
+    <option value="population_aged_60plus_years_male_percent">population_aged_60plus_years_male_percent</option>
+    <option value="population_aged_60plus_years_total_number">population_aged_60plus_years_total_number</option>
+    <option value="population_density_per_square_km">population_density_per_square_km</option>
+    <option value="population_growth_annual_percent">population_growth_annual_percent</option>
+    <option value="population_growth_annual_percent_with_projections">population_growth_annual_percent_with_projections</option>
+    <option value="population_in_urban_agglomerations_m_1_million_percent_of_total">population_in_urban_agglomerations_m_1_million_percent_of_total</option>
+    <option value="population_total">population_total</option>
+    <option value="poverty_percent_people_below_2_a_day">poverty_percent_people_below_2_a_day</option>
+    <option value="present_value_of_debt_percent_of_gni">present_value_of_debt_percent_of_gni</option>
+    <option value="primary_completion_rate_total_percent_of_relevant_age_group">primary_completion_rate_total_percent_of_relevant_age_group</option>
+    <option value="primary_school_completion_percent_of_boys">primary_school_completion_percent_of_boys</option>
+    <option value="primary_school_completion_percent_of_girls">primary_school_completion_percent_of_girls</option>
+    <option value="pump_price_for_gasoline_us_per_liter">pump_price_for_gasoline_us_per_liter</option>
+    <option value="ratio_of_girls_to_boys_in_primary_and_secondary_education_perc">ratio_of_girls_to_boys_in_primary_and_secondary_education_perc</option>
+    <option value="rural_poverty_percent_rural_people_below_national_rural">rural_poverty_percent_rural_people_below_national_rural</option>
+    <option value="services_percent_of_gdp">services_percent_of_gdp</option>
+    <option value="sex_ratio_0_14_years">sex_ratio_0_14_years</option>
+    <option value="sex_ratio_15_24_years">sex_ratio_15_24_years</option>
+    <option value="sex_ratio_15_49_years">sex_ratio_15_49_years</option>
+    <option value="sex_ratio_above_50_years">sex_ratio_above_50_years</option>
+    <option value="sex_ratio_all_age_groups">sex_ratio_all_age_groups</option>
+    <option value="sg_gdp_p_cap_const_ppp2011_dollar">sg_gdp_p_cap_const_ppp2011_dollar</option>
+    <option value="sg_gini">sg_gini</option>
+    <option value="sg_population">sg_population</option>
+    <option value="surface_area_sq_km">surface_area_sq_km</option>
+    <option value="tax_revenue_percent_of_gdp">tax_revenue_percent_of_gdp</option>
+    <option value="total_gdp_us_inflation_adjusted">total_gdp_us_inflation_adjusted</option>
+    <option value="total_gni_ppp_current_international">total_gni_ppp_current_international</option>
+    <option value="total_reserves_percent_of_debt_to_foreigners">total_reserves_percent_of_debt_to_foreigners</option>
+    <option value="trade_balance_percent_of_gdp">trade_balance_percent_of_gdp</option>
+    <option value="trade_balance_us_not_inflation_adjusted">trade_balance_us_not_inflation_adjusted</option>
+    <option value="urban_population">urban_population</option>
+    <option value="urban_population_growth_annual_percent">urban_population_growth_annual_percent</option>
+    <option value="urban_population_percent_of_total">urban_population_percent_of_total</option>
+    <option value="urban_poverty_percent_urban_people_below_national_urban">urban_poverty_percent_urban_people_below_national_urban</option>
+    <option value="yearly_co2_emissions_1000_tonnes">yearly_co2_emissions_1000_tonnes</option>
+    
+    
+
+  </select>
+  <button id="prev_option" onclick="nextPrevOpt(-1);">PREVIOUS</button>
+  <button id="next_option" onclick="nextPrevOpt(+1);">NEXT</button>
+  <div id="placeholder-bubble"></div>
+  <div id="placeholder-line"></div>
+  <script src="script.js"></script>
+  <script>
+    var nextPrevOpt = function(direction) {
+      var sel = document.getElementById('concepts_selector');
+      var i = sel.selectedIndex + direction;
+      if (i < 0) i = sel.options.length - 1;
+      sel.options[i % sel.options.length].selected = true;
+      update_chart();
+    }
+
+    window.onkeypress = function(e) {
+      if (e.keyCode == 91) document.getElementById('prev_option').click();
+      if (e.keyCode == 93) document.getElementById('next_option').click();
+    }
+
+
+    var update_chart = function() {
+      var concept_name = document.getElementById('concepts_selector').value
+      if(!concept_name) return;
+
+      viz1.model.state.marker.axis_x.setWhich({
+        concept: concept_name,
+        dataSource: "data_alternative"
+      })
+      viz1.model.state.marker.axis_y.setWhich({
+        concept: concept_name,
+        dataSource: "data"
+      })
+      viz2.model.state.marker.axis_y.setWhich({
+        concept: concept_name,
+        dataSource: "data"
+      })
+    };
+  </script>
+</body>
+
+</html>
