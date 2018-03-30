@@ -14,9 +14,6 @@ var BUBBLE_MODEL = {
       "dim": "tag"
     },
     "time": {
-      "startOrigin": "1800",
-      "endOrigin": "2017",
-      "value": "2017",
       "dim": "time"
     },
     "marker": {
@@ -112,7 +109,6 @@ var LINE_MODEL = {
   "state": {
     "time": {
       "startOrigin": "2000",
-      "endOrigin": "2017",
       "value": "2017",
       "dim": "time"
     },
