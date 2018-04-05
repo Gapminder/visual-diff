@@ -20,16 +20,23 @@
   <p id="instructions">Y = develop, X = stage. If bubbles are on the diagonal y=x, that means no change. Shortcuts: [ and ]</p>
   
   <select id="concepts_selector" onchange="update_chart();">
-    <option value="" selected="selected">--- pick an indicator to compare ---</option>
-    
-    <option value="life_expectancy_at_birth_with_projections">life_expectancy_at_birth_with_projections</option>
-    <option value="life_expectancy_years">life_expectancy_years</option>
-    <option value="children_per_woman_total_fertility">children_per_woman_total_fertility</option>
-    <option value="income_per_person_gdppercapita_ppp_inflation_adjusted">income_per_person_gdppercapita_ppp_inflation_adjusted</option>
-    <option value="co2_emissions_tonnes_per_person">co2_emissions_tonnes_per_person</option>
-    <option value="child_mortality_0_5_year_olds_dying_per_1000_born">child_mortality_0_5_year_olds_dying_per_1000_born</option>
-    <option value="population_total">population_total</option>
+  <option value="" selected="selected">--- pick an indicator to compare ---</option>
 
+  <option value="coal_consumption_per_cap">coal_consumption_per_cap</option>
+  <option value="coal_consumption_total">coal_consumption_total</option>
+  <option value="electricity_generation_per_person">electricity_generation_per_person</option>
+  <option value="electricity_generation_total">electricity_generation_total</option>
+  <option value="natural_gas_production_per_person">natural_gas_production_per_person</option>
+  <option value="natural_gas_production_total">natural_gas_production_total</option>
+  <option value="natural_gas_proved_reserves_total">natural_gas_proved_reserves_total</option>
+  <option value="natural_gas_proven_reserves_per_person">natural_gas_proven_reserves_per_person</option>
+  <option value="oil_consumption_per_cap">oil_consumption_per_cap</option>
+  <option value="oil_consumption_total">oil_consumption_total</option>
+  <option value="oil_production_per_person">oil_production_per_person</option>
+  <option value="oil_production_total">oil_production_total</option>
+  <option value="oil_proved_reserves_total">oil_proved_reserves_total</option>
+  <option value="oil_proven_reserves_per_person">oil_proven_reserves_per_person</option>
+    
   </select>
   <button id="prev_option" onclick="nextPrevOpt(-1);">PREVIOUS</button>
   <button id="next_option" onclick="nextPrevOpt(+1);">NEXT</button>

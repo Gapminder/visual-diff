@@ -99,7 +99,7 @@ var BUBBLE_MODEL = {
   },
   "data": {
     "reader": "waffle",
-    "dataset": "open-numbers/ddf--gapminder--systema_globalis#develop",
+    //"dataset": "open-numbers/ddf--gapminder--systema_globalis", //#develop
     "path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/"
   }
 };
@@ -188,7 +188,7 @@ var LINE_MODEL = {
   },
   "data": {
     "reader": "waffle",
-    "dataset": "open-numbers/ddf--gapminder--systema_globalis#develop",
+    //"dataset": "open-numbers/ddf--gapminder--systema_globalis", //#develop
     "path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/"
   }
 };
