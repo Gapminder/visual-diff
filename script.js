@@ -98,9 +98,11 @@ var BUBBLE_MODEL = {
     "path": "https://waffle-server.gapminder.org/api/ddf/ql/"
   },
   "data": {
-    "reader": "waffle",
+    //"reader": "waffle",
     //"dataset": "open-numbers/ddf--gapminder--systema_globalis#develop", 
-    "path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/"
+    //"path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/"
+    "reader": "ddf",
+    "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/develop/"
   }
 };
 
@@ -187,9 +189,12 @@ var LINE_MODEL = {
     "splash": false
   },
   "data": {
-    "reader": "waffle",
-    "path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/",
-    "dataset": "open-numbers/ddf--gapminder--systema_globalis#develop"
+    //"reader": "waffle",
+    //"path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/",
+    //"dataset": "open-numbers/ddf--gapminder--systema_globalis#develop"
+    
+    "reader": "ddf",
+    "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/develop/"
   }
 };
 
@@ -198,6 +203,10 @@ var LINE_MODEL = {
 //WS reader integration
 var wsReader = WsReader.WsReader.getReader();
 Vizabi.Reader.extend("waffle", wsReader);
+
+//DDFCSV reader integration
+var ddfReader = new DDFCsvReader.getDDFCsvReaderObject()
+Vizabi.Reader.extend("ddf", ddfReader);
 
 var viz1 = Vizabi('BubbleChart', document.getElementById('placeholder-bubble'), BUBBLE_MODEL);
 var viz2 = Vizabi('LineChart', document.getElementById('placeholder-line'), LINE_MODEL);
