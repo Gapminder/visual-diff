@@ -93,9 +93,11 @@ var BUBBLE_MODEL = {
     "splash": true
   },
   "data_alternative": {
-    "reader": "waffle",
-    "dataset": "open-numbers/ddf--gapminder--systema_globalis",
-    "path": "https://waffle-server.gapminder.org/api/ddf/ql/"
+//    "reader": "waffle",
+//    "dataset": "open-numbers/ddf--gapminder--systema_globalis",
+//    "path": "https://waffle-server.gapminder.org/api/ddf/ql/",
+    "reader": "ddf",
+    "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/master/"
   },
   "data": {
     //"reader": "waffle",
