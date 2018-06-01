@@ -22,12 +22,39 @@
   
   <select id="concepts_selector" onchange="update_chart();">
   <option value="" selected="selected">--- pick an indicator to compare ---</option>
-
-  <option value="agriculture_percent_of_gdp">agriculture_percent_of_gdp</option>
-  <option value="aid_received_per_person_current_us">aid_received_per_person_current_us</option>
-  <option value="aid_received_percent_of_gni">aid_received_percent_of_gni</option>
-  <option value="alternative_gdp_per_capita_ppp_wb">alternative_gdp_per_capita_ppp_wb</option>
-  <option value="alternative_poverty_percent_below_nationally_defined_poverty">alternative_poverty_percent_below_nationally_defined_poverty</option>
+<option value="aged_15_24_employment_rate_percent">aged_15_24_employment_rate_percent</option>
+<option value="aged_15_24_unemployment_rate_percent">aged_15_24_unemployment_rate_percent</option>
+<option value="aged_15_64_labour_force_participation_rate_percent">aged_15_64_labour_force_participation_rate_percent</option>
+<option value="aged_15plus_employment_rate_percent">aged_15plus_employment_rate_percent</option>
+<option value="aged_15plus_labour_force_participation_rate_percent">aged_15plus_labour_force_participation_rate_percent</option>
+<option value="aged_15plus_unemployment_rate_percent">aged_15plus_unemployment_rate_percent</option>
+<option value="aged_25_54_labour_force_participation_rate_percent">aged_15plus_unemployment_rate_percent</option>
+<option value="aged_25_54_unemployment_rate_percent">aged_25_54_unemployment_rate_percent</option>
+<option value="aged_65plus_labour_force_participation_rate_percent">aged_65plus_labour_force_participation_rate_percent</option>
+<option value="female_long_term_unemployment_rate_percent">female_long_term_unemployment_rate_percent</option>
+<option value="females_aged_15_24_employment_rate_percent">females_aged_15_24_employment_rate_percent</option>
+<option value="females_aged_15_24_unemployment_rate_percent">females_aged_15_24_unemployment_rate_percent</option>
+<option value="females_aged_15_64_labour_force_participation_rate_percent">females_aged_15_64_labour_force_participation_rate_percent</option>
+<option value="females_aged_15plus_employment_rate_percent">females_aged_15plus_employment_rate_percent</option>
+<option value="females_aged_15plus_labour_force_participation_rate_percent">females_aged_15plus_labour_force_participation_rate_percent</option>
+<option value="females_aged_15plus_unemployment_rate_percent">females_aged_15plus_unemployment_rate_percent</option>
+<option value="females_aged_25_54_labour_force_participation_rate_percent">females_aged_25_54_labour_force_participation_rate_percent</option>
+<option value="females_aged_25_54_unemployment_rate_percent">females_aged_25_54_unemployment_rate_percent</option>
+<option value="females_aged_65plus_labour_force_participation_rate_percent">females_aged_65plus_labour_force_participation_rate_percent</option>
+<option value="gdpperworking_hour_us_inflation_adjusted">gdpperworking_hour_us_inflation_adjusted</option>
+<option value="long_term_unemployment_rate_percent">long_term_unemployment_rate_percent</option>
+<option value="male_long_term_unemployment_rate_percent">male_long_term_unemployment_rate_percent</option>
+<option value="males_aged_15_24_employment_rate_percent">males_aged_15_24_employment_rate_percent</option>
+<option value="males_aged_15_24_unemployment_rate_percent">males_aged_15_24_unemployment_rate_percent</option>
+<option value="males_aged_15_64_labour_force_participation_rate_percent">males_aged_15_64_labour_force_participation_rate_percent</option>
+<option value="males_aged_15plus_employment_rate_percent">males_aged_15plus_employment_rate_percent</option>
+<option value="males_aged_15plus_labour_force_participation_rate_percent">males_aged_15plus_labour_force_participation_rate_percent</option>
+<option value="males_aged_15plus_unemployment_rate_percent">males_aged_15plus_unemployment_rate_percent</option>
+<option value="males_aged_25_54_labour_force_participation_rate_percent">males_aged_25_54_labour_force_participation_rate_percent</option>
+<option value="males_aged_25_54_unemployment_rate_percent">males_aged_25_54_unemployment_rate_percent</option>
+<option value="males_aged_65plus_labour_force_participation_rate_percent">males_aged_65plus_labour_force_participation_rate_percent</option>
+<option value="working_hours_per_week">working_hours_per_week</option>
+    
   <option value="armed_forces_personnel_percent_of_labor_force">armed_forces_personnel_percent_of_labor_force</option>
   <option value="arms_exports_us_inflation_adjusted">arms_exports_us_inflation_adjusted</option>
   <option value="arms_imports_us_inflation_adjusted">arms_imports_us_inflation_adjusted</option>
@@ -114,25 +141,6 @@
     
   <option value="corruption_perception_index_cpi">CPI</option>
   <option value="hdi_human_development_index">HDI</option>
-    
-  <option value="agricultural_water_withdrawal_percent_of_total">FAO agricultural_water_withdrawal_percent_of_total</option>
-  <option value="biomass_stock_in_forest_tons">FAO biomass_stock_in_forest_tons</option>
-  <option value="desalinated_water_produced_billion_cu_meters">FAO desalinated_water_produced_billion_cu_meters</option>
-  <option value="food_supply_kilocalories_per_person_and_day">FAO food_supply_kilocalories_per_person_and_day</option>
-  <option value="forest_coverage_percent">FAO forest_coverage_percent</option>
-  <option value="forest_land_total_area_ha">FAO forest_land_total_area_ha</option>
-  <option value="industrial_water_withdrawal_percent_of_total">FAO industrial_water_withdrawal_percent_of_total</option>
-  <option value="internal_renewable_water_cu_meters_per_person">FAO internal_renewable_water_cu_meters_per_person</option>
-  <option value="municipal_water_withdrawal_cu_meters_per_person">FAO municipal_water_withdrawal_cu_meters_per_person</option>
-  <option value="municipal_water_withdrawal_percent_of_total">FAO municipal_water_withdrawal_percent_of_total</option>
-  <option value="planted_forest_area_ha">FAO planted_forest_area_ha</option>
-  <option value="primary_forest_area_ha">FAO primary_forest_area_ha</option>
-  <option value="privately_owned_forest_land_percent">FAO privately_owned_forest_land_percent</option>
-  <option value="renewable_water_cu_meters_per_person">FAO renewable_water_cu_meters_per_person</option>
-  <option value="sugar_per_person_g_per_day">FAO sugar_per_person_g_per_day</option>
-  <option value="total_water_withdrawal_billion_cu_meters">FAO total_water_withdrawal_billion_cu_meters</option>
-  <option value="water_withdrawal_cu_meters_per_person">FAO water_withdrawal_cu_meters_per_person</option>
-  <option value="wood_removal_cubic_meters">FAO wood_removal_cubic_meters</option>
     
   </select>
   <button id="prev_option" onclick="nextPrevOpt(-1);">PREVIOUS</button>
