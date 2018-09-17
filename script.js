@@ -112,7 +112,7 @@ var BUBBLE_MODEL = {
 var LINE_MODEL = {
   "state": {
     "time": {
-      "startOrigin": "1990",
+      "startOrigin": "1900",
       "value": "2017",
       "dim": "time"
     },
