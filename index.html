@@ -18,53 +18,83 @@
 </head>
 
 <body>
-  <p id="instructions">Y = develop, X = stage. If bubbles are on the diagonal y=x, that means no change. Shortcuts: [ and ]</p>
+  <p id="instructions">Y = develop, X = last-reviewed. If bubbles are on the diagonal y=x, that means no change. Shortcuts: [ and ]</p>
   
   <select id="concepts_selector" onchange="update_chart();">
     <option value="" selected="selected">--- pick an indicator to compare ---</option>
-    <option value="stomach_cancer_deaths_per_100000_women">stomach_cancer_deaths_per_100000_women</option>
-    <option value="colonandrectum_cancer_new_cases_per_100000_men">colonandrectum_cancer_new_cases_per_100000_men</option>
-    <option value="breast_cancer_number_of_female_deaths">breast_cancer_number_of_female_deaths</option>
-    <option value="colonandrectum_cancer_deaths_per_100000_men">colonandrectum_cancer_deaths_per_100000_men</option>
-    <option value="prostate_cancer_number_of_new_male_cases">prostate_cancer_number_of_new_male_cases</option>
+    
+    
     <option value="breast_cancer_deaths_per_100000_women">breast_cancer_deaths_per_100000_women</option>
-    <option value="stomach_cancer_number_of_female_deaths">stomach_cancer_number_of_female_deaths</option>
-    <option value="colonandrectum_cancer_number_of_new_male_cases">colonandrectum_cancer_number_of_new_male_cases</option>
-    <option value="cervical_cancer_deaths_per_100000_women">cervical_cancer_deaths_per_100000_women</option>
-    <option value="liver_cancer_deaths_per_100000_men">liver_cancer_deaths_per_100000_men</option>
     <option value="breast_cancer_new_cases_per_100000_women">breast_cancer_new_cases_per_100000_women</option>
-    <option value="stomach_cancer_new_cases_per_100000_women">stomach_cancer_new_cases_per_100000_women</option>
-    <option value="liver_cancer_number_of_male_deaths">liver_cancer_number_of_male_deaths</option>
-    <option value="lung_cancer_number_of_new_male_cases">lung_cancer_number_of_new_male_cases</option>
+    <option value="breast_cancer_number_of_female_deaths">breast_cancer_number_of_female_deaths</option>
+    <option value="breast_cancer_number_of_new_female_cases">breast_cancer_number_of_new_female_cases</option>
+    <option value="cervical_cancer_deaths_per_100000_women">cervical_cancer_deaths_per_100000_women</option>
+    <option value="cervical_cancer_new_cases_per_100000_women">cervical_cancer_new_cases_per_100000_women</option>
     <option value="cervical_cancer_number_of_female_deaths">cervical_cancer_number_of_female_deaths</option>
-    <option value="lung_cancer_deaths_per_100000_women">lung_cancer_deaths_per_100000_women</option>
-    <option value="liver_cancer_number_of_new_male_cases">liver_cancer_number_of_new_male_cases</option>
+    <option value="cervical_cancer_number_of_new_female_cases">cervical_cancer_number_of_new_female_cases</option>
+    <option value="colonandrectum_cancer_deaths_per_100000_men">colonandrectum_cancer_deaths_per_100000_men</option>
     <option value="colonandrectum_cancer_deaths_per_100000_women">colonandrectum_cancer_deaths_per_100000_women</option>
-    <option value="colonandrectum_cancer_number_of_new_female_cases">colonandrectum_cancer_number_of_new_female_cases</option>
-    <option value="liver_cancer_number_of_new_female_cases">liver_cancer_number_of_new_female_cases</option>
+    <option value="colonandrectum_cancer_new_cases_per_100000_men">colonandrectum_cancer_new_cases_per_100000_men</option>
+    <option value="colonandrectum_cancer_new_cases_per_100000_women">colonandrectum_cancer_new_cases_per_100000_women</option>
+    <option value="colonandrectum_cancer_number_of_female_deaths">colonandrectum_cancer_number_of_female_deaths</option>
     <option value="colonandrectum_cancer_number_of_male_deaths">colonandrectum_cancer_number_of_male_deaths</option>
-    <option value="liver_cancer_number_of_female_deaths">liver_cancer_number_of_female_deaths</option>
+    <option value="colonandrectum_cancer_number_of_new_female_cases">colonandrectum_cancer_number_of_new_female_cases</option>
+    <option value="colonandrectum_cancer_number_of_new_male_cases">colonandrectum_cancer_number_of_new_male_cases</option>
+    <option value="liver_cancer_deaths_per_100000_men">liver_cancer_deaths_per_100000_men</option>
+    <option value="liver_cancer_deaths_per_100000_women">liver_cancer_deaths_per_100000_women</option>
+    <option value="liver_cancer_new_cases_per_100000_men">liver_cancer_new_cases_per_100000_men</option>
     <option value="liver_cancer_new_cases_per_100000_women">liver_cancer_new_cases_per_100000_women</option>
+    <option value="liver_cancer_number_of_female_deaths">liver_cancer_number_of_female_deaths</option>
+    <option value="liver_cancer_number_of_male_deaths">liver_cancer_number_of_male_deaths</option>
+    <option value="liver_cancer_number_of_new_female_cases">liver_cancer_number_of_new_female_cases</option>
+    <option value="liver_cancer_number_of_new_male_cases">liver_cancer_number_of_new_male_cases</option>
+    <option value="lung_cancer_deaths_per_100000_men">lung_cancer_deaths_per_100000_men</option>
+    <option value="lung_cancer_deaths_per_100000_women">lung_cancer_deaths_per_100000_women</option>
+    <option value="lung_cancer_new_cases_per_100000_men">lung_cancer_new_cases_per_100000_men</option>
+    <option value="lung_cancer_new_cases_per_100000_women">lung_cancer_new_cases_per_100000_women</option>
+    <option value="lung_cancer_number_of_female_deaths">lung_cancer_number_of_female_deaths</option>
     <option value="lung_cancer_number_of_male_deaths">lung_cancer_number_of_male_deaths</option>
     <option value="lung_cancer_number_of_new_female_cases">lung_cancer_number_of_new_female_cases</option>
-    <option value="stomach_cancer_number_of_new_male_cases">stomach_cancer_number_of_new_male_cases</option>
-    <option value="breast_cancer_number_of_new_female_cases">breast_cancer_number_of_new_female_cases</option>
-    <option value="colonandrectum_cancer_number_of_female_deaths">colonandrectum_cancer_number_of_female_deaths</option>
+    <option value="lung_cancer_number_of_new_male_cases">lung_cancer_number_of_new_male_cases</option>
+    <option value="murder_per_100000_people">murder_per_100000_people</option>
+    <option value="murder_total_deaths">murder_total_deaths</option>
+    <option value="murdered_15_29_per_100000_people">murdered_15_29_per_100000_people</option>
+    <option value="murdered_30_44_per_100000_people">murdered_30_44_per_100000_people</option>
+    <option value="murdered_45_59_per_100000_people">murdered_45_59_per_100000_people</option>
+    <option value="murdered_60plus_per_100000_people">murdered_60plus_per_100000_people</option>
+    <option value="murdered_children_0_14_per_100000_people">murdered_children_0_14_per_100000_people</option>
+    <option value="murdered_men_per_100000_people">murdered_men_per_100000_people</option>
+    <option value="murdered_women_per_100000_people">murdered_women_per_100000_people</option>
     <option value="prostate_cancer_deaths_per_100000_men">prostate_cancer_deaths_per_100000_men</option>
-    <option value="stomach_cancer_number_of_male_deaths">stomach_cancer_number_of_male_deaths</option>
-    <option value="stomach_cancer_new_cases_per_100000_men">stomach_cancer_new_cases_per_100000_men</option>
-    <option value="cervical_cancer_new_cases_per_100000_women">cervical_cancer_new_cases_per_100000_women</option>
-    <option value="lung_cancer_new_cases_per_100000_men">lung_cancer_new_cases_per_100000_men</option>
-    <option value="colonandrectum_cancer_new_cases_per_100000_women">colonandrectum_cancer_new_cases_per_100000_women</option>
-    <option value="lung_cancer_deaths_per_100000_men">lung_cancer_deaths_per_100000_men</option>
-    <option value="liver_cancer_deaths_per_100000_women">liver_cancer_deaths_per_100000_women</option>
     <option value="prostate_cancer_new_cases_per_100000_men">prostate_cancer_new_cases_per_100000_men</option>
-    <option value="cervical_cancer_number_of_new_female_cases">cervical_cancer_number_of_new_female_cases</option>
-    <option value="liver_cancer_new_cases_per_100000_men">liver_cancer_new_cases_per_100000_men</option>
-    <option value="stomach_cancer_number_of_new_female_cases">stomach_cancer_number_of_new_female_cases</option>
+    <option value="prostate_cancer_number_of_new_male_cases">prostate_cancer_number_of_new_male_cases</option>
     <option value="stomach_cancer_deaths_per_100000_men">stomach_cancer_deaths_per_100000_men</option>
-    <option value="lung_cancer_number_of_female_deaths">lung_cancer_number_of_female_deaths</option>
-    <option value="lung_cancer_new_cases_per_100000_women">lung_cancer_new_cases_per_100000_women</option>
+    <option value="stomach_cancer_deaths_per_100000_women">stomach_cancer_deaths_per_100000_women</option>
+    <option value="stomach_cancer_new_cases_per_100000_men">stomach_cancer_new_cases_per_100000_men</option>
+    <option value="stomach_cancer_new_cases_per_100000_women">stomach_cancer_new_cases_per_100000_women</option>
+    <option value="stomach_cancer_number_of_female_deaths">stomach_cancer_number_of_female_deaths</option>
+    <option value="stomach_cancer_number_of_male_deaths">stomach_cancer_number_of_male_deaths</option>
+    <option value="stomach_cancer_number_of_new_female_cases">stomach_cancer_number_of_new_female_cases</option>
+    <option value="stomach_cancer_number_of_new_male_cases">stomach_cancer_number_of_new_male_cases</option>
+    <option value="suicide_age_0_14_per_100000_people">suicide_age_0_14_per_100000_people</option>
+    <option value="suicide_age_15_29_per_100000_people">suicide_age_15_29_per_100000_people</option>
+    <option value="suicide_age_30_44_per_100000_people">suicide_age_30_44_per_100000_people</option>
+    <option value="suicide_age_45_59_per_100000_people">suicide_age_45_59_per_100000_people</option>
+    <option value="suicide_age_60plus_per_100000_people">suicide_age_60plus_per_100000_people</option>
+    <option value="suicide_men_per_100000_people">suicide_men_per_100000_people</option>
+    <option value="suicide_per_100000_people">suicide_per_100000_people</option>
+    <option value="suicide_total_deaths">suicide_total_deaths</option>
+    <option value="suicide_women_per_100000_people">suicide_women_per_100000_people</option>
+    <option value="traffic_deaths_men_per_100000_people">traffic_deaths_men_per_100000_people</option>
+    <option value="traffic_deaths_per_100000_people">traffic_deaths_per_100000_people</option>
+    <option value="traffic_deaths_women_per_100000_people">traffic_deaths_women_per_100000_people</option>
+    <option value="traffic_mortality_15_29_per_100000_people">traffic_mortality_15_29_per_100000_people</option>
+    <option value="traffic_mortality_30_44_per_100000_people">traffic_mortality_30_44_per_100000_people</option>
+    <option value="traffic_mortality_45_59_per_100000_people">traffic_mortality_45_59_per_100000_people</option>
+    <option value="traffic_mortality_60plus_per_100000_people">traffic_mortality_60plus_per_100000_people</option>
+    <option value="traffic_mortality_children_0_14_per_100000_people">traffic_mortality_children_0_14_per_100000_people</option>
+    <option value="traffic_total_deaths">traffic_total_deaths</option>
+    
     
   </select>
   <button id="prev_option" onclick="nextPrevOpt(-1);">PREVIOUS</button>
