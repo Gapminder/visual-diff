@@ -100,11 +100,11 @@ var BUBBLE_MODEL = {
     "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/stage/"
   },
   "data": {
-    "reader": "waffle",
-    "dataset": "open-numbers/ddf--gapminder--systema_globalis#develop", 
-    "path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/"
- //   "reader": "ddf",
- //   "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/develop/"
+//    "reader": "waffle",
+//    "dataset": "open-numbers/ddf--gapminder--systema_globalis#develop", 
+//    "path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/"
+    "reader": "ddf",
+    "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/develop/"
   }
 };
 
@@ -191,12 +191,12 @@ var LINE_MODEL = {
     "splash": false
   },
   "data": {
-    "reader": "waffle",
-    "path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/",
-    "dataset": "open-numbers/ddf--gapminder--systema_globalis#develop"
+ //   "reader": "waffle",
+ //   "path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/",
+ //   "dataset": "open-numbers/ddf--gapminder--systema_globalis#develop"
     
- //   "reader": "ddf",
- //   "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/develop/"
+    "reader": "ddf",
+    "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/develop/"
   }
 };
 
