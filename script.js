@@ -97,14 +97,14 @@ var BUBBLE_MODEL = {
 //    "dataset": "open-numbers/ddf--gapminder--systema_globalis",
 //    "path": "https://waffle-server.gapminder.org/api/ddf/ql/",
     "reader": "ddf",
-    "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/last-reviewed/"
+    "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/stage/"
   },
   "data": {
-    //"reader": "waffle",
-    //"dataset": "open-numbers/ddf--gapminder--systema_globalis#develop", 
-    //"path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/"
-    "reader": "ddf",
-    "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/develop/"
+    "reader": "waffle",
+    "dataset": "open-numbers/ddf--gapminder--systema_globalis#develop", 
+    "path": "https://waffle-server-dev.gapminderdev.org/api/ddf/ql/"
+ //   "reader": "ddf",
+ //   "path": "https://raw.githubusercontent.com/open-numbers/ddf--gapminder--systema_globalis/develop/"
   }
 };
 
