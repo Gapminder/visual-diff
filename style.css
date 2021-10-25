@@ -1,6 +1,6 @@
 #placeholder-bubble, #placeholder-line {
   margin-top: 20px;
-  width: 100%;
+  width: 100vw;
   height: 768px;
 }
 #instructions {

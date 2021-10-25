@@ -4,43 +4,43 @@
 <head>
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <title>Vizabi Testing</title>
-  <script src="https://d3js.org/d3.v4.js"></script>
-  <link href="style.css" rel="stylesheet" type="text/css" >
-  <link href="libs/vizabi.css" rel="stylesheet" type="text/css" >
+  
+  <link href="style.css" rel="stylesheet" type="text/css">
+  <link href="libs/VizabiSharedComponents.css" rel="stylesheet" type="text/css">
   <link href="libs/bubblechart.css" rel="stylesheet" type="text/css">
   <link href="libs/linechart.css" rel="stylesheet" type="text/css">
-  <script src="libs/vizabi.js"></script>
+
+  <script src="libs/d3.v6.min.js"></script>
+  <script src="libs/mobx.umd.js"></script>
+  <script src="libs/Vizabi.js"></script>
+  <script src="libs/VizabiSharedComponents.js"></script>
+
   <script src="libs/bubblechart.js"></script>
   <script src="libs/linechart.js"></script>
-  <script src="libs/vizabi-ddfcsv-reader.js"></script>
-  <script src="libs/vizabi-ws-reader.js"></script>
-  <script src="libs/vizabi-ddfcsv-reader.js"></script>
+  <script src="libs/reader-ddfcsv.js"></script>
+  <script src="libs/reader-ddfservice.js"></script>
+  <script src="libs/reader-ddfcsv-polyfill.js"></script>
+
 </head>
 
 <body>
-  <p id="instructions">Y = develop, X = last-reviewed. If bubbles are on the diagonal y=x, that means no change. Shortcuts: [ and ]</p>
+  <p id="instructions">
+    Y = new data, X = old data. If bubbles are on the diagonal y=x, that means no change. <br/> 
+    Select indicators in line chart folder "newdata" to have them changed in the bubbles too
+  </p>
   
-  <select id="concepts_selector" onchange="update_chart();">
+  <!--select id="concepts_selector" onchange="update_chart();">
     <option value="" selected="selected">--- pick an indicator to compare ---</option>
    
 <option value="tb_hivplus_deaths_per_100000_estimated">tb_hivplus_deaths_per_100000_estimated</option>
 <option value="tb_hivplus_number_of_deaths_estimated">tb_hivplus_number_of_deaths_estimated</option>
-<option value="all_forms_of_tb_incidence_per_100000_estimated">all_forms_of_tb_incidence_per_100000_estimated</option>
-<option value="all_forms_of_tb_incidence_estimated">all_forms_of_tb_incidence_estimated</option>
-<option value="tb_hivplus_incidence_per_100000_estimated">tb_hivplus_incidence_per_100000_estimated</option>
-<option value="tb_hivplus_incidence_estimated">tb_hivplus_incidence_estimated</option>
-<option value="all_forms_of_tb_incidence_and_number_of_new_cases_per_100000_estimated">all_forms_of_tb_incidence_and_number_of_new_cases_per_100000_estimated</option>
-<option value="all_forms_of_tb_incidence_and_number_of_new_cases_estimated">all_forms_of_tb_incidence_and_number_of_new_cases_estimated</option>
-<option value="all_forms_of_tb_deaths_per_100000_estimated">all_forms_of_tb_deaths_per_100000_estimated</option>
-<option value="all_forms_of_tb_number_of_deaths_estimated">all_forms_of_tb_number_of_deaths_estimated</option>
-<option value="all_forms_of_tb_treatment_coverage_percent">all_forms_of_tb_treatment_coverage_percent</option>
 
     
-  </select>
-  <button id="prev_option" onclick="nextPrevOpt(-1);">PREVIOUS</button>
-  <button id="next_option" onclick="nextPrevOpt(+1);">NEXT</button>
-  <div id="placeholder-bubble"></div>
-  <div id="placeholder-line"></div>
+  </select-->
+  <!--button id="prev_option" onclick="nextPrevOpt(-1);">PREVIOUS</button-->
+  <!--button id="next_option" onclick="nextPrevOpt(+1);">NEXT</button-->
+  <div id="placeholder-bubble" class="vzb-tool vzb-placeholder"></div>
+  <div id="placeholder-line" class="vzb-tool vzb-placeholder"></div>
   <script src="script.js"></script>
   <script>
     var nextPrevOpt = function(direction) {
@@ -51,10 +51,10 @@
       update_chart();
     }
 
-    window.onkeypress = function(e) {
-      if (e.keyCode == 91) document.getElementById('prev_option').click();
-      if (e.keyCode == 93) document.getElementById('next_option').click();
-    }
+    // window.onkeypress = function(e) {
+    //   if (e.keyCode == 91) document.getElementById('prev_option').click();
+    //   if (e.keyCode == 93) document.getElementById('next_option').click();
+    // }
 
 
     var update_chart = function() {

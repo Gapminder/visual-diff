@@ -1,760 +1,13 @@
-/******/ (function(modules) { // webpackBootstrap
-/******/ 	// The module cache
-/******/ 	var installedModules = {};
-/******/
-/******/ 	// The require function
-/******/ 	function __webpack_require__(moduleId) {
-/******/
-/******/ 		// Check if module is in cache
-/******/ 		if(installedModules[moduleId]) {
-/******/ 			return installedModules[moduleId].exports;
-/******/ 		}
-/******/ 		// Create a new module (and put it into the cache)
-/******/ 		var module = installedModules[moduleId] = {
-/******/ 			i: moduleId,
-/******/ 			l: false,
-/******/ 			exports: {}
-/******/ 		};
-/******/
-/******/ 		// Execute the module function
-/******/ 		modules[moduleId].call(module.exports, module, module.exports, __webpack_require__);
-/******/
-/******/ 		// Flag the module as loaded
-/******/ 		module.l = true;
-/******/
-/******/ 		// Return the exports of the module
-/******/ 		return module.exports;
-/******/ 	}
-/******/
-/******/
-/******/ 	// expose the modules object (__webpack_modules__)
-/******/ 	__webpack_require__.m = modules;
-/******/
-/******/ 	// expose the module cache
-/******/ 	__webpack_require__.c = installedModules;
-/******/
-/******/ 	// identity function for calling harmony imports with the correct context
-/******/ 	__webpack_require__.i = function(value) { return value; };
-/******/
-/******/ 	// define getter function for harmony exports
-/******/ 	__webpack_require__.d = function(exports, name, getter) {
-/******/ 		if(!__webpack_require__.o(exports, name)) {
-/******/ 			Object.defineProperty(exports, name, {
-/******/ 				configurable: false,
-/******/ 				enumerable: true,
-/******/ 				get: getter
-/******/ 			});
-/******/ 		}
-/******/ 	};
-/******/
-/******/ 	// getDefaultExport function for compatibility with non-harmony modules
-/******/ 	__webpack_require__.n = function(module) {
-/******/ 		var getter = module && module.__esModule ?
-/******/ 			function getDefault() { return module['default']; } :
-/******/ 			function getModuleExports() { return module; };
-/******/ 		__webpack_require__.d(getter, 'a', getter);
-/******/ 		return getter;
-/******/ 	};
-/******/
-/******/ 	// Object.prototype.hasOwnProperty.call
-/******/ 	__webpack_require__.o = function(object, property) { return Object.prototype.hasOwnProperty.call(object, property); };
-/******/
-/******/ 	// __webpack_public_path__
-/******/ 	__webpack_require__.p = "";
-/******/
-/******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 4);
-/******/ })
-/************************************************************************/
-/******/ ([
-/* 0 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-
-__webpack_require__(2);
-
-var _component = __webpack_require__(1);
-
-var _component2 = _interopRequireDefault(_component);
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
-var VERSION_INFO = { version: "2.0.4", build: 1518538317880 };
-
-// LINE CHART TOOL
-var LineChart = Vizabi.Tool.extend("LineChart", {
-  /**
-   * Initialized the tool
-   * @param {Object} placeholder Placeholder element for the tool
-   * @param {Object} external_model Model as given by the external page
-   */
-  init: function init(placeholder, external_model) {
-
-    this.name = "linechart";
-
-    this.components = [{
-      component: _component2.default,
-      placeholder: ".vzb-tool-viz",
-      model: ["state.time", "state.marker", "locale", "ui"] //pass models to component
-    }, {
-      component: Vizabi.Component.get("timeslider"),
-      placeholder: ".vzb-tool-timeslider",
-      model: ["state.time", "state.marker", "ui"],
-      ui: { show_value_when_drag_play: true, axis_aligned: false }
-    }, {
-      component: Vizabi.Component.get("dialogs"),
-      placeholder: ".vzb-tool-dialogs",
-      model: ["state", "ui", "locale"]
-    }, {
-      component: Vizabi.Component.get("buttonlist"),
-      placeholder: ".vzb-tool-buttonlist",
-      model: ["state", "ui", "locale"]
-    }, {
-      component: Vizabi.Component.get("treemenu"),
-      placeholder: ".vzb-tool-treemenu",
-      model: ["state.marker", "state.marker_tags", "state.time", "locale"]
-    }, {
-      component: Vizabi.Component.get("datawarning"),
-      placeholder: ".vzb-tool-datawarning",
-      model: ["locale"]
-    }, {
-      component: Vizabi.Component.get("datanotes"),
-      placeholder: ".vzb-tool-datanotes",
-      model: ["state.marker", "locale"]
-    }, {
-      component: Vizabi.Component.get("steppedspeedslider"),
-      placeholder: ".vzb-tool-stepped-speed-slider",
-      model: ["state.time", "locale"]
-    }];
-
-    this._super(placeholder, external_model);
-  },
-
-
-  default_model: {
-    "state": {
-      "time": {
-        "autoconfig": {
-          "type": "time"
-        }
-      },
-      "entities": {
-        "autoconfig": {
-          "type": "entity_domain",
-          "excludeIDs": ["tag"]
-        }
-      },
-      "entities_colorlegend": {
-        "autoconfig": {
-          "type": "entity_domain",
-          "excludeIDs": ["tag"]
-        }
-      },
-      "entities_tags": {
-        "autoconfig": {
-          "type": "entity_domain",
-          "includeOnlyIDs": ["tag"]
-        }
-      },
-      "marker_tags": {
-        "space": ["entities_tags"],
-        "label": {
-          "use": "property"
-        },
-        "hook_parent": {}
-      },
-      "marker": {
-        limit: 5000,
-        "space": ["entities", "time"],
-        "axis_x": {
-          "use": "indicator",
-          "allow": { scales: ["time"] },
-          "autoconfig": {
-            "index": 0,
-            "type": "time"
-          }
-        },
-        "axis_y": {
-          "use": "indicator",
-          "allow": { scales: ["linear", "log"] },
-          "autoconfig": {
-            "type": "measure"
-          }
-        },
-        "label": {
-          "use": "property",
-          "autoconfig": {
-            "includeOnlyIDs": ["name"],
-            "type": "string"
-          }
-        },
-        "color": {
-          "syncModels": ["marker_colorlegend"],
-          "autoconfig": {}
-        }
-      },
-      "marker_colorlegend": {
-        "space": ["entities_colorlegend"],
-        "label": {
-          "use": "property",
-          "which": "name"
-        },
-        "hook_rank": {
-          "use": "property",
-          "which": "rank"
-        },
-        "hook_geoshape": {
-          "use": "property",
-          "which": "shape_lores_svg"
-        }
-      }
-    },
-    locale: {},
-    "ui": {
-      "chart": {
-        "curve": "curveMonotoneX",
-        "labels": {
-          "min_number_of_entities_when_values_hide": 2 //values hide when showing 2 entities or more
-        },
-        "whenHovering": {
-          "hideVerticalNow": false,
-          "showProjectionLineX": true,
-          "showProjectionLineY": true,
-          "higlightValueX": true,
-          "higlightValueY": true,
-          "showTooltip": false
-        }
-      },
-      datawarning: {
-        doubtDomain: [],
-        doubtRange: []
-      },
-      "buttons": ["colors", "find", "moreoptions", "fullscreen", "presentation"],
-      "dialogs": {
-        "popup": ["colors", "find", "moreoptions"],
-        "sidebar": ["colors", "find"],
-        "moreoptions": ["opacity", "speed", "axes", "colors", "presentation", "about"],
-        "dialog": { "find": { "panelMode": "show" } }
-      },
-      "presentation": false
-    }
-  },
-
-  versionInfo: VERSION_INFO
-});
-
-exports.default = LineChart;
-
-/***/ }),
-/* 1 */
-/***/ (function(module, exports, __webpack_require__) {
-
-"use strict";
-
-
-Object.defineProperty(exports, "__esModule", {
-  value: true
-});
-var _Vizabi = Vizabi,
-    utils = _Vizabi.utils,
-    Component = _Vizabi.Component,
-    _Vizabi$helpers = _Vizabi.helpers,
-    axisSmart = _Vizabi$helpers["d3.axisWithLabelPicker"],
-    collisionResolver = _Vizabi$helpers["d3.collisionResolver"],
-    _Vizabi$iconset = _Vizabi.iconset,
-    iconWarn = _Vizabi$iconset.warn,
-    iconQuestion = _Vizabi$iconset.question;
-
-// LINE CHART COMPONENT
-
-var LCComponent = Component.extend("linechart", {
-  init: function init(config, context) {
-    var _this = this;
-    this.name = "linechart";
-    this.template = __webpack_require__(3);
-
-    //define expected models for this component
-    this.model_expects = [{
-      name: "time",
-      type: "time"
-    }, {
-      name: "marker",
-      type: "marker"
-    }, {
-      name: "locale",
-      type: "locale"
-    }, {
-      name: "ui",
-      type: "ui"
-    }];
-
-    this.model_binds = {
-      "change:time.value": function changeTimeValue() {
-        if (!_this._readyOnce) return;
-        _this.updateTime();
-        _this.redrawDataPoints();
-      },
-      "change:time.playing": function changeTimePlaying() {
-        // hide tooltip on touch devices when playing
-        if (_this.model.time.playing && utils.isTouchDevice() && !_this.tooltip.classed("vzb-hidden")) _this.tooltip.classed("vzb-hidden", true);
-      },
-      "change:time.start": function changeTimeStart() {
-        if (!_this._readyOnce || !_this.all_values || !_this.values) return;
-        _this.updateIndicators();
-        _this.updateShow();
-        _this.zoomToMaxMin();
-        _this.updateSize();
-        _this.redrawDataPoints();
-        _this.highlightLines();
-      },
-      "change:time.end": function changeTimeEnd() {
-        if (!_this._readyOnce || !_this.all_values || !_this.values) return;
-        _this.updateIndicators();
-        _this.updateShow();
-        _this.zoomToMaxMin();
-        _this.updateSize();
-        _this.redrawDataPoints();
-        _this.highlightLines();
-      },
-      "change:marker": function changeMarker(evt, path) {
-        if (!_this._readyOnce) return;
-        if (path.indexOf("domainMin") > -1 || path.indexOf("domainMax") > -1 || path.indexOf("zoomedMin") > -1 || path.indexOf("zoomedMax") > -1) {
-          if (!_this.yScale || !_this.xScale) return; //abort if building of the scale is in progress
-          if (path.indexOf("axis_x") > -1) {
-            var startOrigin = _this.model.time.formatDate(_this.model.marker.axis_x.getZoomedMin());
-            var endOrigin = _this.model.time.formatDate(_this.model.marker.axis_x.getZoomedMax());
-            _this.model.time.set({
-              startOrigin: startOrigin,
-              endOrigin: endOrigin
-            });
-            return;
-          }
-          if (!_this.all_values || !_this.values) return;
-          _this.updateIndicators();
-          _this.updateShow();
-          _this.zoomToMaxMin();
-          _this.updateSize();
-          _this.updateTime();
-          _this.redrawDataPoints();
-          _this.highlightLines();
-          return;
-        }
-        if (path.indexOf("scaleType") > -1) {
-          if (!_this.all_values || !_this.values) return;
-          _this.updateIndicators();
-          _this.updateShow();
-          _this.zoomToMaxMin();
-          _this.updateSize();
-          _this.redrawDataPoints();
-          _this.highlightLines();
-        }
-      },
-      "change:marker.highlight": function changeMarkerHighlight() {
-        if (!_this._readyOnce) return;
-        _this.highlightLines();
-      },
-      "change:marker.select": function changeMarkerSelect() {
-        if (!_this._readyOnce) return;
-        _this.updateDoubtOpacity();
-        _this.highlightLines();
-      },
-      "change:marker.opacitySelectDim": function changeMarkerOpacitySelectDim() {
-        if (!_this._readyOnce) return;
-        _this.highlightLines();
-      },
-      "change:marker.opacityRegular": function changeMarkerOpacityRegular() {
-        if (!_this._readyOnce) return;
-        _this.highlightLines();
-      },
-      "change:marker.color": function changeMarkerColor() {
-        if (!_this._ready) return;
-        _this.model.marker.getFrame(_this.model.time.value, function (frame, time) {
-          if (!_this._frameIsValid(frame)) return utils.warn("change:marker.color: empty data received from marker.getFrame(). doing nothing");
-          _this.values = frame;
-          _this.updateColors();
-        });
-      }
-    };
-
-    this._super(config, context);
-
-    this.xScale = null;
-    this.yScale = null;
-
-    this.rangeXRatio = 1;
-    this.rangeXShift = 0;
-
-    this.rangeYRatio = 1;
-    this.rangeYShift = 0;
-    this.lineWidthScale = d3.scaleLinear().domain([0, 20]).range([7, 1]).clamp(true);
-    this.xAxis = axisSmart("bottom");
-    this.yAxis = axisSmart("left");
-
-    this.COLOR_BLACKISH = "#333";
-    this.COLOR_WHITEISH = "#fdfdfd";
-    this.COLOR_WHITEISH_SHADE = "#555";
-
-    this.isDataPreprocessed = false;
-    this.timeUpdatedOnce = false;
-    this.sizeUpdatedOnce = false;
-
-    this.getNearestKey = utils.memoize(this.getNearestKey);
-  },
-
-
-  /*
-   * domReady:
-   * Executed after template is loaded
-   * Ideally, it contains instantiations related to template
-   */
-  readyOnce: function readyOnce() {
-    var _this2 = this;
-
-    var _this = this;
-
-    this.element = d3.select(this.element);
-    this.graph = this.element.select(".vzb-lc-graph");
-
-    this.yAxisElContainer = this.graph.select(".vzb-lc-axis-y");
-    this.yAxisEl = this.yAxisElContainer.select("g");
-
-    this.xAxisElContainer = this.graph.select(".vzb-lc-axis-x");
-    this.xAxisEl = this.xAxisElContainer.select("g");
-
-    this.xTitleEl = this.graph.select(".vzb-lc-axis-x-title");
-    this.yTitleEl = this.graph.select(".vzb-lc-axis-y-title");
-    this.yInfoEl = this.graph.select(".vzb-lc-axis-y-info");
-    this.linesContainerCrop = this.graph.select(".vzb-lc-lines-crop");
-    this.linesContainer = this.graph.select(".vzb-lc-lines");
-    this.labelsContainerCrop = this.graph.select(".vzb-lc-labels-crop");
-    this.labelsContainer = this.graph.select(".vzb-lc-labels");
-
-    this.dataWarningEl = this.graph.select(".vzb-data-warning");
-
-    this.verticalNow = this.labelsContainer.select(".vzb-lc-vertical-now");
-    this.tooltip = this.element.select(".vzb-tooltip");
-    //            this.filterDropshadowEl = this.element.select('#vzb-lc-filter-dropshadow');
-    this.projectionX = this.graph.select(".vzb-lc-projection-x");
-    this.projectionY = this.graph.select(".vzb-lc-projection-y");
-
-    this.entityLabels = this.labelsContainer.selectAll(".vzb-lc-entity");
-    this.entityLines = this.linesContainer.selectAll(".vzb-lc-entity");
-    this.totalLength_1 = {};
-
-    this.TIMEDIM = this.model.time.getDimension();
-    this.KEYS = utils.unique(this.model.marker._getAllDimensions({ exceptType: "time" }));
-    this.KEY = this.KEYS.join(",");
-    this.dataKeys = this.model.marker.getDataKeysPerHook();
-
-    this.collisionResolver = collisionResolver().selector(".vzb-lc-label").value("valueY").filter(function (d, time) {
-      return d.valueX - time === 0 && !d.hidden;
-    });
-
-    //component events
-
-    var conceptPropsY = this.model.marker.axis_y.getConceptprops();
-    utils.setIcon(this.yInfoEl, iconQuestion).select("svg").attr("width", "0px").attr("height", "0px").style('opacity', Number(Boolean(conceptPropsY.description || conceptPropsY.sourceLink)));
-
-    this.yInfoEl.on("click", function () {
-      _this.parent.findChildByName("gapminder-datanotes").pin();
-    });
-    this.yInfoEl.on("mouseover", function () {
-      var rect = this.getBBox();
-      var coord = utils.makeAbsoluteContext(this, this.farthestViewportElement)(rect.x - 10, rect.y + rect.height + 10);
-      _this.parent.findChildByName("gapminder-datanotes").setHook("axis_y").show().setPos(coord.x, coord.y);
-    });
-    this.yInfoEl.on("mouseout", function () {
-      _this.parent.findChildByName("gapminder-datanotes").hide();
-    });
-
-    this.wScale = d3.scaleLinear().domain(this.model.ui.datawarning.doubtDomain).range(this.model.ui.datawarning.doubtRange);
-
-    this.on("resize", function () {
-      //return if updatesize exists with error
-      if (_this.updateSize()) return;
-      _this.updateTime();
-      _this.redrawDataPoints();
-    });
-    this.graph.on("click", function () {
-      if (_this2.model.marker.highlight.length == 1) {
-        _this.model.marker.selectMarker(_this2.model.marker.highlight[0]);
-      }
-    });
-  },
-  ready: function ready() {
-    var _this = this;
-    this.KEYS = utils.unique(this.model.marker._getAllDimensions({ exceptType: "time" }));
-    this.KEY = this.KEYS.join(",");
-    this.dataKeys = this.model.marker.getDataKeysPerHook();
-
-    this.all_steps = this.model.time.getAllSteps();
-    this.all_values = this.values = null;
-    this.updateTime();
-    this.updateUIStrings();
-    this.updateIndicators();
-    //this.updateShow();
-    this.entityLines.remove();
-    this.entityLabels.remove();
-    //null means we need to calculate all frames before we get to the callback
-    this.model.marker.getFrame(null, function (allValues) {
-      _this.all_values = allValues;
-      _this.model.marker.getFrame(_this.model.time.value, function (values) {
-        if (!_this._frameIsValid(values)) return;
-        _this.values = values;
-        _this.updateShow();
-        if (_this.updateSize()) return;
-        _this.updateDoubtOpacity();
-        _this.zoomToMaxMin();
-        _this.redrawDataPoints();
-        _this.highlightLines();
-        _this.linesContainerCrop.on("mousemove", _this.entityMousemove.bind(_this, null, null, _this)).on("mouseleave", _this.entityMouseout.bind(_this, null, null, _this));
-      });
-    });
-  },
-  _frameIsValid: function _frameIsValid(frame) {
-    return !(!frame || Object.keys(frame.axis_y).length === 0 || Object.keys(frame.axis_x).length === 0 || Object.keys(frame.color).length === 0);
-  },
-  updateUIStrings: function updateUIStrings() {
-    var _this = this;
-    var conceptPropsY = _this.model.marker.axis_y.getConceptprops();
-    var conceptPropsX = _this.model.marker.axis_x.getConceptprops();
-    var conceptPropsC = _this.model.marker.color.getConceptprops();
-    this.translator = this.model.locale.getTFunction();
-
-    this.strings = {
-      title: {
-        Y: conceptPropsY.name,
-        X: conceptPropsX.name,
-        C: conceptPropsC.name
-      },
-      unit: {
-        Y: conceptPropsY.unit || "",
-        X: conceptPropsX.unit || "",
-        C: conceptPropsC.unit || ""
-      }
-    };
-
-    if (this.strings.unit.Y === "unit/" + this.model.marker.axis_y.which) this.strings.unit.Y = "";
-    if (this.strings.unit.X === "unit/" + this.model.marker.axis_x.which) this.strings.unit.X = "";
-    if (this.strings.unit.C === "unit/" + this.model.marker.color.which) this.strings.unit.C = "";
-
-    if (this.strings.unit.Y) this.strings.unit.Y = ", " + this.strings.unit.Y;
-    if (this.strings.unit.X) this.strings.unit.X = ", " + this.strings.unit.X;
-    if (this.strings.unit.C) this.strings.unit.C = ", " + this.strings.unit.C;
-
-    utils.setIcon(this.dataWarningEl, iconWarn).select("svg").attr("width", "0px").attr("height", "0px");
-    this.dataWarningEl.append("text").attr("text-anchor", "end").text(this.translator("hints/dataWarning"));
-
-    this.dataWarningEl.on("click", function () {
-      _this.parent.findChildByName("gapminder-datawarning").toggle();
-    }).on("mouseover", function () {
-      _this.updateDoubtOpacity(1);
-    }).on("mouseout", function () {
-      _this.updateDoubtOpacity();
-    });
-
-    var xTitle = this.xTitleEl.selectAll("text").data([0]);
-    xTitle = xTitle.enter().append("text").merge(xTitle);
-
-    var yTitle = this.yTitleEl.selectAll("text").data([0]);
-    yTitle = yTitle.enter().append("text").merge(yTitle);
-    yTitle.on("click", function () {
-      _this.parent.findChildByName("gapminder-treemenu").markerID("axis_y").alignX("left").alignY("top").updateView().toggle();
-    });
-  },
-  updateDoubtOpacity: function updateDoubtOpacity(opacity) {
-    if (opacity == null) opacity = this.wScale(+this.time.getUTCFullYear().toString());
-    if (this.someSelected) opacity = 1;
-    this.dataWarningEl.style("opacity", opacity);
-  },
-
-
-  /*
-   * UPDATE INDICATORS
-   */
-  updateIndicators: function updateIndicators() {
-    var _this = this;
-    var KEY = this.KEY;
-
-    //scales
-    this.yScale = this.model.marker.axis_y.getScale();
-    if (!this.splash) {
-      var limits = this.model.marker.axis_y.getLimits(this.model.marker.axis_y.which);
-      this.yScale.domain([limits.min, limits.max]);
-    }
-    this.xScale = this.model.marker.axis_x.getScale();
-    this.cScale = this.model.marker.color.getScale();
-    this.yAxis.tickFormat(this.model.marker.axis_y.getTickFormatter());
-    this.xAxis.tickFormat(this.model.marker.axis_x.getTickFormatter());
-
-    this.collisionResolver.scale(this.yScale).KEY(KEY);
-  },
-
-
-  /*
-   * UPDATE SHOW:
-   * Ideally should only update when show parameters change or data changes
-   */
-  updateShow: function updateShow() {
-    var _this3 = this;
-
-    var _this = this;
-    var KEYS = this.KEYS;
-    var KEY = this.KEY;
-    var dataKeys = this.dataKeys;
-
-    this.cached = {};
-
-    this.dataHash = {};
-    this.data = this.model.marker.getKeys().map(function (entity) {
-      entity[KEY] = utils.getKey(entity, KEYS);
-      _this3.dataHash[entity[KEY]] = entity;
-      return entity;
-    });
-    this.linesContainer.selectAll(".vzb-lc-entity").remove();
-    this.entityLines = this.linesContainer.selectAll(".vzb-lc-entity").data(this.data);
-
-    this.lineWidth = this.lineWidthScale(this.data.length);
-    if (this.lineWidth >= 2) {
-      this.shadowWidth = this.lineWidth * 1.3;
-    } else {
-      this.shadowWidth = null;
-    }
-    this.labelsContainer.classed("small", !this.shadowWidth);
-    this.entityLines = this.entityLines.enter().append("g").attr("class", function (d) {
-      return "vzb-lc-entity vzb-lc-entity-" + d[KEY];
-    }).each(function (d, index) {
-      var entity = d3.select(this);
-      if (_this.shadowWidth) {
-        entity.append("path").attr("class", "vzb-lc-line-shadow");
-      } else {}
-
-      entity.append("path").attr("class", "vzb-lc-line");
-    }).merge(this.entityLines);
-    this.labelsContainer.selectAll(".vzb-lc-entity").remove();
-    this.entityLabels = this.labelsContainer.selectAll(".vzb-lc-entity").data(this.data);
-    this.entityLabels = this.entityLabels.enter().append("g").attr("class", "vzb-lc-entity").on("mouseover", function (d) {
-      _this.model.marker.highlightMarker(d);
-    }).on("mouseout", function (d) {
-      _this.model.marker.clearHighlighted();
-    }).each(function (d, index) {
-      var entity = d3.select(this);
-
-      entity.append("circle").attr("class", "vzb-lc-circle").attr("cx", 0);
-
-      var labelGroup = entity.append("g").attr("class", "vzb-lc-label");
-
-      labelGroup.append("text").attr("class", "vzb-lc-labelname vzb-lc-labelstroke").attr("dy", ".35em");
-
-      labelGroup.append("text").attr("class", "vzb-lc-labelname vzb-lc-labelfill").attr("dy", ".35em");
-
-      labelGroup.append("text").attr("class", "vzb-lc-label-value").attr("dy", "1.6em");
-    }).merge(this.entityLabels);
-
-    if (this.all_values && this.values) {
-      this.entityLabels.each(function (d, index) {
-        var entity = d3.select(this);
-
-        var _this$getColorsByValu = _this.getColorsByValue(_this.values.color[utils.getKey(d, dataKeys.color)]),
-            color = _this$getColorsByValu.color,
-            colorShadow = _this$getColorsByValu.colorShadow;
-
-        var label = _this.model.marker.getCompoundLabelText(d, _this.values);
-        var value = _this.yAxis.tickFormat()(_this.values.axis_y[utils.getKey(d, dataKeys.axis_y)]);
-        var name = label.length < 13 ? label : label.substring(0, 10) + "..."; //"…";
-        var valueHideLimit = _this.ui.chart.labels.min_number_of_entities_when_values_hide;
-
-        entity.select("circle").style("fill", color);
-        entity.selectAll(".vzb-lc-labelname").text(name + " " + (_this.data.length < valueHideLimit ? value : ""));
-        entity.select(".vzb-lc-labelfill").style("fill", colorShadow);
-        entity.append("title").text(label + " " + value);
-
-        entity.select(".vzb-lc-label-value").style("fill", colorShadow);
-      });
-    }
-
-    //line template
-    this.line = d3.line()
-    //see https://bl.ocks.org/mbostock/4342190
-    //"monotone" can also work. "basis" would skip the points on the sharp turns. "linear" is ugly
-    .curve(d3[this.ui.chart.curve || "curveMonotoneX"]).x(function (d) {
-      return _this.xScale(d[0]);
-    }).y(function (d) {
-      return _this.yScale(d[1]);
-    });
-  },
-  getColorsByValue: function getColorsByValue(colorValue) {
-    return {
-      color: colorValue != null ? this.cScale(colorValue) : this.COLOR_WHITEISH,
-      colorShadow: colorValue != null ? this.model.marker.color.getColorShade({
-        colorID: colorValue,
-        shadeID: "shade"
-      }) : this.COLOR_WHITEISH_SHADE
-    };
-  },
-  updateColors: function updateColors() {
-    var _this = this;
-    var dataKeys = this.dataKeys = this.model.marker.getDataKeysPerHook();
-    var valuesColor = this.values.color;
-
-    this.cScale = this.model.marker.color.getScale();
-
-    this.entityLabels.each(function (d, index) {
-      var entity = d3.select(this);
-
-      var _this$getColorsByValu2 = _this.getColorsByValue(valuesColor[utils.getKey(d, dataKeys.color)]),
-          color = _this$getColorsByValu2.color,
-          colorShadow = _this$getColorsByValu2.colorShadow;
-
-      entity.select("circle").style("fill", color);
-      entity.select(".vzb-lc-labelfill").style("fill", colorShadow);
-      entity.select(".vzb-lc-label-value").style("fill", colorShadow);
-    });
-
-    this.entityLines.each(function (d, index) {
-      var entity = d3.select(this);
-
-      var _this$getColorsByValu3 = _this.getColorsByValue(valuesColor[utils.getKey(d, dataKeys.color)]),
-          color = _this$getColorsByValu3.color,
-          colorShadow = _this$getColorsByValu3.colorShadow;
-
-      entity.select(".vzb-lc-line").style("stroke", color);
-      entity.select(".vzb-lc-line-shadow").style("stroke", colorShadow);
-    });
-  },
-
-  /*
-   * UPDATE TIME:
-   * Ideally should only update when time or data changes
-   */
-  updateTime: function updateTime() {
-    var _this = this;
-    var KEY = this.KEY;
-    var time_1 = this.time === null ? this.model.time.value : this.time;
-    this.time = this.model.time.value;
-    this.duration = this.model.time.playing && this.time - time_1 > 0 ? this.model.time.delayAnimations : 0;
-
-    var timeDim = this.model.time.getDimension();
-    var filter = {};
-
-    filter[timeDim] = this.time;
-
-    this.prev_steps = this.all_steps.filter(function (f) {
-      return f < _this.time;
-    });
-
-    this.timeUpdatedOnce = true;
-  },
-
-
-  profiles: {
-    "small": {
+// https://github.com/vizabi/linechart#readme v3.7.5 build 1635167409425 Copyright 2021 Gapminder Foundation and contributors
+(function (global, factory) {
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('VizabiSharedComponents'), require('mobx')) :
+  typeof define === 'function' && define.amd ? define(['VizabiSharedComponents', 'mobx'], factory) :
+  (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.LineChart = factory(global.VizabiSharedComponents, global.mobx));
+}(this, (function (VizabiSharedComponents, mobx) { 'use strict';
+
+  const {ICON_QUESTION} = VizabiSharedComponents.Icons;
+  const PROFILE_CONSTANTS = {
+    SMALL: {
       margin: {
         top: 30,
         right: 20,
@@ -768,7 +21,7 @@ var LCComponent = Component.extend("linechart", {
       lollipopRadius: 6,
       limitMaxTickNumberX: 5
     },
-    "medium": {
+    MEDIUM: {
       margin: {
         top: 40,
         right: 60,
@@ -782,7 +35,7 @@ var LCComponent = Component.extend("linechart", {
       lollipopRadius: 7,
       limitMaxTickNumberX: 10
     },
-    "large": {
+    LARGE: {
       margin: {
         top: 50,
         right: 60,
@@ -796,536 +49,1323 @@ var LCComponent = Component.extend("linechart", {
       lollipopRadius: 9,
       limitMaxTickNumberX: 0 // unlimited
     }
-  },
-  presentationProfileChanges: {
-    "medium": {
-      margin: { top: 70, bottom: 40, left: 70 },
+  };
+
+  const PROFILE_CONSTANTS_FOR_PROJECTOR = {
+    MEDIUM: {
+      margin: {
+        top: 70,
+        bottom: 40,
+        left: 70,
+        right: 60
+      },
       yAxisTitleBottomMargin: 20,
       xAxisTitleBottomMargin: 20,
       infoElHeight: 26,
       text_padding: 30
     },
-    "large": {
-      margin: { top: 70, bottom: 50, left: 70 },
+    LARGE: {
+      margin: {
+        top: 70,
+        bottom: 50,
+        left: 70,
+        right: 60
+      },
       yAxisTitleBottomMargin: 20,
       xAxisTitleBottomMargin: 20,
       infoElHeight: 32,
       text_padding: 36,
       hideSTitle: true
     }
-  },
+  };
 
-  timeSliderProfiles: {
-    small: {
-      margin: {
-        top: 7,
-        right: 15,
-        bottom: 10,
-        left: 60
-      }
-    },
-    medium: {
-      margin: {
-        top: 10,
-        right: 15,
-        bottom: 10,
-        left: 60
-      }
-    },
-    large: {
-      margin: {
-        top: 5,
-        right: 15,
-        bottom: 10,
-        left: 75
-      }
-    }
-  },
+  //
+  // LINE CHART COMPONENT
+  class _VizabiLineChart extends VizabiSharedComponents.BaseComponent {
 
-  /*
-   * RESIZE:
-   * Executed whenever the container is resized
-   * Ideally, it contains only operations related to size
-   */
-  updateSize: function updateSize() {
+    constructor(config) {
+      config.template = `
+      <svg class="vzb-linechart-svg vzb-export">
+          <g class="vzb-lc-graph">
 
-    var _this = this;
-    var values = this.values;
-    var KEY = this.KEY;
-    var isRTL = this.model.locale.isRTL();
+              <svg class="vzb-lc-axis-x"><g></g></svg>
+              <svg class="vzb-lc-axis-y"><g></g></svg>
+              <text class="vzb-lc-axis-x-value"></text>
+              <text class="vzb-lc-axis-y-value"></text>
+              <svg class="vzb-lc-lines-crop">
+                  <svg class="vzb-lc-lines"></svg>
+                  <line class="vzb-lc-projection-x"></line>
+                  <line class="vzb-lc-projection-y"></line>
+              </svg>
+              <svg class="vzb-lc-labels-crop">
+                  <g class="vzb-lc-labels">
+                      <line class="vzb-lc-vertical-now"></line>
+                  </g>
+              </svg>
 
-    var padding = 2;
+              <g class="vzb-lc-axis-y-title">
+                <text></text>
+              </g>
+              <g class="vzb-lc-axis-x-title">
+                <text></text>
+              </g>
+              <g class="vzb-lc-axis-y-info"></g>
 
-    this.activeProfile = this.getActiveProfile(this.profiles, this.presentationProfileChanges);
-    this.margin = this.activeProfile.margin;
-    this.tick_spacing = this.activeProfile.tick_spacing;
+              <g class="no-data-message vzb-hidden">                  
+                  <text></text>
+              </g>
 
-    var infoElHeight = this.activeProfile.infoElHeight;
+              <!--filter id="vzb-lc-filter-dropshadow"> 
+                <feOffset result="offOut" in="SourceGraphic" dx="0" dy="2" />
+                <feColorMatrix result = "matrixOut" in = "offOut" type = "matrix"
+                              values = "0.3 .0 .0 .0 .0
+                                        .0 .3 .0 .0 .0
+                                        .0 .0 .3 .0 .0
+                                        1.0 1.0 1.0 1.0 .0"/>
+                <feGaussianBlur result="blurOut" in="matrixOut" stdDeviation="0.8" />
+                <feBlend in="SourceGraphic" in2="blurOut" mode="normal" />
+              </filter-->
 
-    //adjust right this.margin according to biggest label
-
-    var longestLabelWidth = 0;
-
-    this.entityLabels.selectAll(".vzb-lc-labelname").attr("dx", _this.activeProfile.text_padding).each(function (d, index) {
-      var width = this.getComputedTextLength();
-      if (width > longestLabelWidth) longestLabelWidth = width;
-    });
-
-    this.entityLabels.selectAll(".vzb-lc-circle").attr("r", this.shadowWidth ? _this.activeProfile.lollipopRadius : _this.activeProfile.lollipopRadius * 0.8);
-
-    var magicMargin = 20;
-    this.margin.right = Math.max(this.margin.right, longestLabelWidth + this.activeProfile.text_padding + magicMargin);
-
-    //stage
-    this.height = parseInt(this.element.style("height"), 10) - this.margin.top - this.margin.bottom || 0;
-    this.width = parseInt(this.element.style("width"), 10) - this.margin.left - this.margin.right || 0;
-
-    if (this.height <= 0 || this.width <= 0) return utils.warn("Line chart updateSize() abort: vizabi container is too little or has display:none");
-
-    this.linesContainerCrop.attr("width", this.width).attr("height", Math.max(0, this.height));
-
-    this.labelsContainerCrop.attr("width", this.width + this.margin.right).attr("height", Math.max(0, this.height));
-
-    this.collisionResolver.height(this.height);
-
-    this.graph.attr("transform", "translate(" + this.margin.left + "," + this.margin.top + ")");
-
-    this.yScale.range([this.height - this.activeProfile.lollipopRadius, this.activeProfile.lollipopRadius]);
-    this.xScale.range([this.rangeXShift, this.width * this.rangeXRatio + this.rangeXShift]);
-
-    this.yAxis.scale(this.yScale).tickSizeInner(-this.width).tickSizeOuter(0).tickPadding(6).tickSizeMinor(-this.width, 0).labelerOptions({
-      scaleType: this.model.marker.axis_y.scaleType,
-      toolMargin: this.margin,
-      limitMaxTickNumber: 6,
-      viewportLength: this.height,
-      formatter: this.model.marker.axis_y.getTickFormatter()
-    });
-
-    this.xAxis.scale(this.xScale).tickSizeInner(-this.height).tickSizeOuter(0).tickSizeMinor(-this.height, 0).tickPadding(6).labelerOptions({
-      scaleType: this.model.marker.axis_x.scaleType,
-      limitMaxTickNumber: this.activeProfile.limitMaxTickNumberX,
-      toolMargin: this.margin,
-      bump: this.activeProfile.text_padding * 2,
-      formatter: this.model.marker.axis_x.getTickFormatter()
-      //showOuter: true
-    });
-
-    this.xAxisElContainer.attr("width", this.width + this.activeProfile.text_padding * 2).attr("height", this.activeProfile.margin.bottom + this.height).attr("y", -1).attr("x", -this.activeProfile.text_padding);
-
-    this.xAxisEl.attr("transform", "translate(" + (this.activeProfile.text_padding - 1) + "," + (this.height + 1) + ")");
-
-    this.yAxisElContainer.attr("width", this.activeProfile.margin.left + this.width).attr("height", Math.max(0, this.height)).attr("x", -this.activeProfile.margin.left);
-    this.yAxisEl.attr("transform", "translate(" + (this.activeProfile.margin.left - 1) + "," + 0 + ")");
-
-    this.yAxisEl.call(this.yAxis);
-    this.xAxisEl.call(this.xAxis);
-
-    this.yTitleEl.style("font-size", infoElHeight + "px").attr("transform", "translate(" + (10 - this.activeProfile.margin.left + (isRTL ? infoElHeight * 1.4 : 0)) + ", -" + this.activeProfile.yAxisTitleBottomMargin + ")");
-
-    var yTitleText = this.yTitleEl.select("text").text(this.strings.title.Y + this.strings.unit.Y);
-    if (yTitleText.node().getBBox().width > this.width) yTitleText.text(this.strings.title.Y);
-
-    if (this.yInfoEl.select("svg").node()) {
-      var titleBBox = this.yTitleEl.node().getBBox();
-      var t = utils.transform(this.yTitleEl.node());
-
-      this.yInfoEl.select("svg").attr("width", infoElHeight + "px").attr("height", infoElHeight + "px");
-      this.yInfoEl.attr("transform", "translate(" + (isRTL ? 10 - this.activeProfile.margin.left : titleBBox.x + t.translateX + titleBBox.width + infoElHeight * 0.4) + "," + (t.translateY - infoElHeight * 0.8) + ")");
+          </g>
+          <rect class="vzb-lc-forecastoverlay vzb-hidden" x="0" y="0" width="100%" height="100%" fill="url(#vzb-lc-pattern-lines)" pointer-events='none'></rect>
+          <g class="vzb-datawarning-button vzb-noexport"></g>
+      </svg>
+      <div class="vzb-tooltip vzb-hidden"></div>
+      <svg>
+        <defs>
+            <pattern id="vzb-lc-pattern-lines" x="0" y="0" patternUnits="userSpaceOnUse" width="50" height="50" viewBox="0 0 10 10"> 
+                <path d='M-1,1 l2,-2M0,10 l10,-10M9,11 l2,-2' stroke='black' stroke-width='3' opacity='0.08'/>
+            </pattern> 
+        </defs>
+      </svg>
+    `;
+      super(config);
     }
 
-    var warnBB = this.dataWarningEl.select("text").node().getBBox();
-    this.dataWarningEl.select("svg").attr("width", warnBB.height * 0.75).attr("height", warnBB.height * 0.75).attr("x", -warnBB.width - warnBB.height * 1.2).attr("y", -warnBB.height * 0.65);
+    setup() {
+      this.DOM = {
+        element: this.element,
+        graph: this.element.select(".vzb-lc-graph"),
 
-    this.dataWarningEl.attr("transform", "translate(" + (this.width + this.margin.right * 0.85) + ",-" + this.activeProfile.yAxisTitleBottomMargin + ")").select("text");
+        xAxisElContainer: this.element.select(".vzb-lc-axis-x"),
+        yAxisElContainer: this.element.select(".vzb-lc-axis-y"),
+    
+        xTitle: this.element.select(".vzb-lc-axis-x-title"),
+        yTitle: this.element.select(".vzb-lc-axis-y-title"),
+        yInfo: this.element.select(".vzb-lc-axis-y-info"),
+        linesContainerCrop: this.element.select(".vzb-lc-lines-crop"),
+        linesContainer: this.element.select(".vzb-lc-lines"),
+        labelsContainerCrop: this.element.select(".vzb-lc-labels-crop"),
+        labelsContainer: this.element.select(".vzb-lc-labels"),
+        noDataMessage: this.element.select(".no-data-message"),
 
-    var xTitleText = this.xTitleEl.select("text").text(this.strings.title.X + this.strings.unit.X);
+        tooltip: this.element.select(".vzb-tooltip"),
+        //filterDropshadowEl: this.element.select('#vzb-lc-filter-dropshadow'),
+        projectionX: this.element.select(".vzb-lc-projection-x"),
+        projectionY: this.element.select(".vzb-lc-projection-y"),
+        forecastOverlay: this.element.select(".vzb-lc-forecastoverlay")
+      };
+      this.DOM.xAxisEl = this.DOM.xAxisElContainer.select("g");
+      this.DOM.yAxisEl = this.DOM.yAxisElContainer.select("g");
+      this.DOM.verticalNow = this.DOM.labelsContainer.select(".vzb-lc-vertical-now");
+      this.DOM.entityLabels = this.DOM.labelsContainer.selectAll(".vzb-lc-entity");
+      this.DOM.entityLines = this.DOM.linesContainer.selectAll(".vzb-lc-entity");
+    
+      this.totalLength_1 = {};
 
-    this.xTitleEl.style("font-size", infoElHeight + "px").attr("transform", "translate(" + (this.width + this.activeProfile.text_padding + this.activeProfile.yAxisTitleBottomMargin) + "," + (this.height + xTitleText.node().getBBox().height * 0.72) + ")");
+      this.KEY = Symbol.for("key");
 
-    if (xTitleText.node().getBBox().width > this.width - 100) xTitleText.text(this.strings.title.X);
+      this.collisionResolver = VizabiSharedComponents.collisionResolver()
+        .selector(".vzb-lc-label")
+        .value("valueY")
+        .filter(function(d, time){
+          return (d.valueX - time === 0 && !d.hidden);
+        })
+        .KEY(this.KEY);
 
-    // adjust the vertical dashed line
-    this.verticalNow.attr("y1", this.yScale.range()[0]).attr("y2", this.yScale.range()[1]).attr("x1", 0).attr("x2", 0);
-    this.projectionX.attr("y1", _this.yScale.range()[0]);
-    this.projectionY.attr("x2", _this.xScale.range()[0]);
+      this._initInfoElements();
 
-    if (utils.isTouchDevice()) {
-      _this.tooltip.classed("vzb-hidden", true);
-      _this.verticalNow.style("opacity", 1);
-      _this.projectionX.style("opacity", 0);
-      _this.projectionY.style("opacity", 0);
-      _this.xAxisEl.call(_this.xAxis.highlightValue(_this.time));
-      _this.yAxisEl.call(_this.yAxis.highlightValue("none"));
-      _this.graph.selectAll(".vzb-lc-entity").each(function () {
-        d3.select(this).classed("vzb-dimmed", false).classed("vzb-hovered", false);
+      this.xScale = null;
+      this.yScale = null;
+
+      this.rangeXRatio = 1;
+      this.rangeXShift = 0;
+
+      this.rangeYRatio = 1;
+      this.rangeYShift = 0;
+      this.lineWidthScale = d3.scaleLinear().domain([0, 20]).range([7, 1]).clamp(true);
+      this.xAxis = VizabiSharedComponents.axisSmart("bottom");
+      this.yAxis = VizabiSharedComponents.axisSmart("left");
+
+      this.COLOR_BLACKISH = "#333";
+      this.COLOR_WHITEISH = "#fdfdfd";
+      this.COLOR_WHITEISH_SHADE = "#555";
+
+      this.DOM.graph.on("click", () => {
+        const {
+          selected: { data: { filter: selectedFilter } },
+          highlighted: { data: { filter: highlightedFilter} }
+        } = this.MDL;
+        if (highlightedFilter.any()) {
+          selectedFilter.toggle(
+            highlightedFilter.markers.keys().next().value
+          );
+        }
       });
+      this.DOM.linesContainerCrop
+        .on("mousemove", this._entityMousemove.bind(this))
+        .on("mouseleave", this._entityMouseout.bind(this));
 
-      _this.hoveringNow = null;
     }
-    var opts = {
-      rangeMax: this.xScale.range()[1],
-      mRight: longestLabelWidth - magicMargin,
-      profile: this.timeSliderProfiles[this.getLayoutProfile()]
-    };
-    this.parent.trigger("myEvent", opts);
 
-    this.sizeUpdatedOnce = true;
-  },
+    get MDL() {
+      return {
+        frame: this.model.encoding.frame,
+        selected: this.model.encoding.selected,
+        highlighted: this.model.encoding.highlighted,
+        x: this.model.encoding[this.state.alias.x || "x"],
+        y: this.model.encoding[this.state.alias.y || "y"],
+        color: this.model.encoding.color,
+        label: this.model.encoding.label,
+        repeat: this.model.encoding.repeat
+      };
+    }
 
 
-  /*
-   * REDRAW DATA POINTS:
-   * Here plotting happens
-   */
-  redrawDataPoints: function redrawDataPoints() {
-    var _this = this;
-    var KEYS = this.KEYS;
-    var KEY = this.KEY;
-    var dataKeys = this.dataKeys = this.model.marker.getDataKeysPerHook();
-    //    var values = this.values;
+    get profileConstants() {
+      this.services.layout.size;
 
-    if (!_this.all_values) return;
-    this.model.marker.getFrame(this.time, function (values, time) {
+      return this.services.layout.getProfileConstants(PROFILE_CONSTANTS, PROFILE_CONSTANTS_FOR_PROJECTOR);
+    }
 
-      if (!_this._frameIsValid(values)) return utils.warn("redrawDataPoints(): empty data received from marker.getFrame(). doing nothing");
-      _this.values = values;
-      if (!_this.timeUpdatedOnce) {
-        _this.updateTime();
-      }
-      if (!_this.sizeUpdatedOnce) {
-        _this.updateSize();
-      }
-      _this.updateDoubtOpacity();
+    get height(){
+      this.services.layout.size;
 
-      _this.entityLines.each(function (d, index) {
-        var entity = d3.select(this);
+      return this.element.node().clientHeight || 0;
+    }
 
-        var _this$getColorsByValu4 = _this.getColorsByValue(values.color[utils.getKey(d, dataKeys.color)]),
-            color = _this$getColorsByValu4.color,
-            colorShadow = _this$getColorsByValu4.colorShadow;
+    get width(){
+      this.services.layout.size;
 
-        //TODO: optimization is possible if getFrame would return both x and time
-        //TODO: optimization is possible if getFrame would return a limited number of points, say 1 point per screen pixel
-        //          const startTime = new Date();
+      return this.element.node().clientWidth || 0;
+    }
 
-        var xy = _this.prev_steps.map(function (frame, i) {
-          return [frame, _this.all_values[frame] ? _this.all_values[frame].axis_y[utils.getKey(d, dataKeys.axis_y)] : null];
-        }).filter(function (d) {
-          return d[1] || d[1] === 0;
+    checkLayout() {
+      if (!this.height || !this.width) return VizabiSharedComponents.LegacyUtils.warn("Chart _updateProfile() abort: container is too little or has display:none");
+    }
+
+    draw() {
+      this.localise = this.services.locale.auto(this.MDL.frame.interval);
+      
+      this.TIMEDIM = this.MDL.frame.data.concept;
+          
+      if (this.checkLayout()) return; //return if exists with error
+      
+      this.addReaction(this.drawForecastOverlay);
+      this.addReaction(this.constructScales);
+      this.addReaction(this.constructColorScale);
+     
+      this.addReaction(this.updateTime);
+      this.addReaction(this.updateUIStrings);
+      this.addReaction(this.updateShow);
+      this.addReaction(this.updateColors);
+      this.addReaction(this.updateSize);
+      
+      this.addReaction(this.redrawDataPoints);
+      this.addReaction(this.highlightLines);
+      this.addReaction(this.updateNoDataMessage);
+    
+    }
+
+    constructScales() {
+      this.services.layout.size;
+      
+      const zoomedX = this.MDL.x.scale.zoomed;
+      const zoomedY = this.MDL.y.scale.zoomed;
+      this.xScale = this.MDL.x.scale.d3Scale;
+      this.xScale.domain(zoomedX);
+
+      this.yScale = this.MDL.y.scale.d3Scale;
+      this.yScale.domain(zoomedY);
+
+      this.collisionResolver.scale(this.yScale);
+    }
+
+    constructColorScale() {
+      this.cScale = this.MDL.color.scale.d3Scale;
+    }
+
+    drawForecastOverlay() {
+      this.DOM.forecastOverlay.classed("vzb-hidden", 
+        !this.ui.showForecast || 
+        !this.ui.showForecastOverlay || 
+        !this.ui.endBeforeForecast || 
+          (this.MDL.frame.value <= this.MDL.frame.parseValue(this.ui.endBeforeForecast))
+      );
+    }
+
+    _initInfoElements() {
+      const _this = this;
+      const dataNotesDialog = () => this.root.findChild({type: "DataNotes"});
+      const timeSlider = () => this.root.findChild({type: "TimeSlider"});
+
+      VizabiSharedComponents.LegacyUtils.setIcon(this.DOM.yInfo, ICON_QUESTION)
+        .on("click", () => {
+          dataNotesDialog().pin();
+        })
+        .on("mouseover", function() {
+          if (timeSlider().ui.dragging) return;
+          const rect = this.getBBox();
+          const coord = VizabiSharedComponents.LegacyUtils.makeAbsoluteContext(this, this.farthestViewportElement)(rect.x - 10, rect.y + rect.height + 10);
+          const toolRect = _this.root.element.node().getBoundingClientRect();
+          const chartRect = _this.element.node().getBoundingClientRect();
+          dataNotesDialog()
+            .setEncoding(_this.MDL.y)
+            .show()
+            .setPos(coord.x + chartRect.left - toolRect.left, coord.y);
+        })
+        .on("mouseout", () => {
+          if (timeSlider().ui.dragging) return;
+          dataNotesDialog().hide();
         });
-        //          timer += new Date() - startTime;
-        // add last point
-        if (values.axis_y[utils.getKey(d, dataKeys.axis_y)] || values.axis_y[utils.getKey(d, dataKeys.axis_y)] === 0) {
-          xy.push([values.axis_x[utils.getKey(d, dataKeys.axis_x)], values.axis_y[utils.getKey(d, dataKeys.axis_y)]]);
+    }
+
+    _getLabelText(d) {
+      if(d.values) d = d.values[0];
+
+      if (typeof d.label == "object") 
+        return Object.entries(d.label)
+          .filter(entry => entry[0] != this.MDL.frame.data.concept)
+          .map(entry => VizabiSharedComponents.LegacyUtils.isNumber(entry[1]) ? (entry[0] + ": " + entry[1]) : entry[1])
+          .join(", ");
+      if (d.label != null) return "" + d.label;
+      return d[Symbol.for("key")];
+    }
+
+    updateUIStrings() {
+
+      this.strings = {
+        title: {
+          Y: VizabiSharedComponents.Utils.getConceptName(this.MDL.y, this.localise),
+          X: VizabiSharedComponents.Utils.getConceptName(this.MDL.x, this.localise),
+          C: VizabiSharedComponents.Utils.getConceptName(this.MDL.color, this.localise)
+        },
+        unit: {
+          Y: VizabiSharedComponents.Utils.getConceptUnit(this.MDL.y),
+          X: VizabiSharedComponents.Utils.getConceptUnit(this.MDL.x),
+          C: VizabiSharedComponents.Utils.getConceptUnit(this.MDL.color)
         }
+      };
 
-        if (xy.length > 0) {
-          _this.cached[d[KEY]] = {
-            valueX: xy[xy.length - 1][0],
-            valueY: xy[xy.length - 1][1]
-          };
-        } else {
-          delete _this.cached[d[KEY]];
-        }
+      const treemenu = this.root.findChild({type: "TreeMenu"});
 
-        // the following fixes the ugly line butts sticking out of the axis line
-        //if(x[0]!=null && x[1]!=null) xy.splice(1, 0, [(+x[0]*0.99+x[1]*0.01), y[0]]);
-        var path2 = entity.select(".vzb-lc-line");
+      this.DOM.yTitle
+        .classed("vzb-disabled", treemenu.state.ownReadiness !== VizabiSharedComponents.Utils.STATUS.READY)
+        .on("click", () => {
+          treemenu
+            .encoding(this._alias("y"))
+            .alignX("left")
+            .alignY("top")
+            .updateView()
+            .toggle();
+        });
 
-        if (_this.model.time.playing && _this.totalLength_1[d[KEY]] === null) {
-          _this.totalLength_1[d[KEY]] = path2.node().getTotalLength();
-        }
-        var line = _this.line(xy) || "";
+      this.DOM.xTitle
+        .classed("vzb-disabled", treemenu.state.ownReadiness !== VizabiSharedComponents.Utils.STATUS.READY)
+        .on("click", () => {
+          treemenu
+            .encoding(this._alias("x"))
+            .alignX("right")
+            .alignY("bottom")
+            .updateView()
+            .toggle();
+        });
 
-        var path1 = entity.select(".vzb-lc-line-shadow").style("stroke", colorShadow).style("stroke-width", _this.shadowWidth + "px").attr("transform", "translate(0, " + (_this.shadowWidth - _this.lineWidth) + ")").attr("d", line);
-        path2
-        //.style("filter", "none")
-        .style("stroke", color).style("stroke-width", _this.lineWidth + "px").attr("d", line);
-        var totalLength = path2.node().getTotalLength();
+      const conceptPropsY = this.MDL.y.data.conceptProps;
+      this.DOM.yInfo
+        .style("opacity", Number(Boolean(conceptPropsY.description || conceptPropsY.sourceLink)));
+    }
 
-        // this section ensures the smooth transition while playing and not needed otherwise
-        if (_this.model.time.playing) {
+    updateTime() {
+      const { frame } = this.MDL;
+      const time_1 = (this.time === null) ? frame.value : this.time;
+      this.time = frame.value;
+      this.duration = frame.playing && (this.time - time_1 > 0) ? frame.speed || 0 : 0;
 
-          path1.interrupt().attr("stroke-dasharray", totalLength).attr("stroke-dashoffset", totalLength - _this.totalLength_1[d[KEY]]).transition().delay(0).duration(_this.duration).ease(d3.easeLinear).attr("stroke-dashoffset", 0);
-          path2.interrupt().attr("stroke-dasharray", totalLength).attr("stroke-dashoffset", totalLength - _this.totalLength_1[d[KEY]]).transition().delay(0).duration(_this.duration).ease(d3.easeLinear).attr("stroke-dashoffset", 0);
+      this.stepIndex = frame.stepScale(this.time);
+    }
 
-          _this.totalLength_1[d[KEY]] = totalLength;
-        } else {
-          //reset saved line lengths
-          _this.totalLength_1[d[KEY]] = null;
+    updateColors() {
+      const _this = this;
+      const { color } = this.MDL; 
+      const {
+        entityLabels,
+        entityLines
+      } = this.DOM;
 
-          path1.attr("stroke-dasharray", "none").attr("stroke-dashoffset", "none");
+      color.scale.d3Scale;
 
-          path2.attr("stroke-dasharray", "none").attr("stroke-dashoffset", "none");
-        }
+      entityLabels.each(function(d) {
+        const entity = d3.select(this);
+        const {color, colorShadow} = _this._getColorsByValue(d.values[0].color);
+
+        entity.select("circle").style("fill", color);
+        entity.select(".vzb-lc-labelfill")
+          .style("fill", colorShadow);
+        entity.select(".vzb-lc-label-value")
+          .style("fill", colorShadow);
       });
 
-      _this.entityLabels.each(function (d, index) {
-        var entity = d3.select(this);
-        if (_this.cached[d[KEY]]) {
-          d.valueX = _this.xScale(_this.cached[d[KEY]]["valueX"]);
-          d.valueY = _this.yScale(_this.cached[d[KEY]]["valueY"]);
-          entity.classed("vzb-hidden", false).transition().duration(_this.duration).ease(d3.easeLinear).attr("transform", "translate(" + d.valueX + ",0)");
+      entityLines.each(function(d) {
+        const entity = d3.select(this);
+        const {color, colorShadow} = _this._getColorsByValue(d.values[0].color);
+        
+        entity.select(".vzb-lc-line").style("stroke", color);
+        entity.select(".vzb-lc-line-shadow").style("stroke", colorShadow);
+      });
+    }
 
-          entity.select(".vzb-lc-circle").transition().duration(_this.duration).ease(d3.easeLinear).attr("cy", d.valueY + 1);
+    _getColorsByValue(colorValue) {
+      return { 
+        color: colorValue != null ? this.cScale(colorValue) : this.COLOR_WHITEISH,
+        colorShadow: colorValue != null ? this.MDL.color.scale.palette.getColorShade({
+          colorID: colorValue,
+          shadeID: "shade"
+        })
+          : this.COLOR_WHITEISH_SHADE
+      };
+    }
 
-          if (_this.data.length < _this.ui.chart.labels.min_number_of_entities_when_values_hide * KEYS.length) {
-            var label = _this.model.marker.getCompoundLabelText(d, _this.values);
-            var value = _this.yAxis.tickFormat()(_this.cached[d[KEY]]["valueY"]);
-            var name = label.length < 13 ? label : label.substring(0, 12) + "…"; //"…";
+    _processFramesData() {
+      const KEY = this.KEY;
+      const data = new Map();
+      this.model.getTransformedDataMap("filterRequired").each(frame => frame.forEach((valuesObj, key) => {
+        if (!data.has(key)) data.set(key, { [KEY]: key, values:[] });
+        data.get(key).values.push(valuesObj);
+      }));
+      
+      return [...data.values()].map(d => {
+        d.shiftIndex = this.MDL.frame.stepScale(d.values[0][this.TIMEDIM]);
+        return d;
+      });
+    }
 
-            entity.selectAll(".vzb-lc-labelname").text(name + " " + value);
+    updateNoDataMessage(){
+      this.services.layout.size;
+      this.DOM.noDataMessage
+        .classed("vzb-hidden", this._processFramesData().length);
+
+      if (this._processFramesData().length) return;
+
+      this.DOM.noDataMessage
+        .attr("transform", `translate(${this.width/2 - this.profileConstants.margin.left}, ${this.height/2})`)
+        .select("text")
+        .text(this.localise("hints/no-data-available"));
+    }
+
+    _isFrameOnXaxis(){
+      return this.MDL.frame.data.concept === this.MDL.x.data.concept;
+    }
+
+    /*
+     * UPDATE SHOW:
+     * Ideally should only update when show parameters change or data changes
+     */
+    updateShow() {
+      this.MDL.x.scale.zoomed;
+
+      const _this = this;
+      const KEY = this.KEY;
+      const {
+        labelsContainer,
+      } = this.DOM;
+      let {
+        entityLines,
+        entityLabels
+      } = this.DOM;
+      
+      this.cached = {};
+
+      this.data = this._processFramesData();
+      entityLines = entityLines.data(this.data, d => d[KEY]);
+      entityLines.exit().remove();
+
+      this.lineWidth = this.lineWidthScale(this.data.length);
+      if (this.lineWidth >= 2) {
+        this.shadowWidth = this.lineWidth * 1.3;
+      } else {
+        this.shadowWidth = null;
+      }
+
+      labelsContainer.classed("small", !this.shadowWidth);
+      this.DOM.entityLines = entityLines = entityLines
+        .enter().append("g")
+        .attr("class", d => "vzb-lc-entity vzb-lc-entity-" + d[KEY])
+        .each(function() {
+          const entity = d3.select(this);
+          entity.append("path")
+            .attr("class", "vzb-lc-line");
+        })
+        .merge(entityLines);
+
+      this.DOM.entityLines.selectAll(".vzb-lc-line-shadow")
+        .remove();
+      if (_this.shadowWidth) {
+        this.DOM.entityLines.insert("path", ":first-child")
+          .attr("class", "vzb-lc-line-shadow");
+      }
+        
+      entityLabels = entityLabels.data(this.data, d => d[KEY]);
+      entityLabels.exit().remove();
+      this.DOM.entityLabels = entityLabels = entityLabels.enter().append("g")
+        .attr("class", "vzb-lc-entity")
+        .on("mouseover", (event, d) => {
+          _this.MDL.highlighted.data.filter.set(d, JSON.stringify(d.values[d.values.length - 1]));
+        })
+        .on("mouseout", (event, d) => {
+          _this.MDL.highlighted.data.filter.delete(d);
+        })
+        .each(function() {
+          const entity = d3.select(this);
+
+          entity.append("circle")
+            .attr("class", "vzb-lc-circle")
+            .attr("cx", 0);
+          entity.append("title");
+
+          const labelGroup = entity.append("g").attr("class", "vzb-lc-label");
+
+          labelGroup.append("text")
+            .attr("class", "vzb-lc-labelname vzb-lc-labelstroke")
+            .attr("dy", ".35em");
+
+          labelGroup.append("text")
+            .attr("class", "vzb-lc-labelname vzb-lc-labelfill")
+            .attr("dy", ".35em");
+
+          labelGroup.append("text")
+            .attr("class", "vzb-lc-label-value")
+            .attr("dy", "1.6em");
+        })
+        .merge(entityLabels);
+
+      //line template
+      this.line = d3.line()
+      //see https://bl.ocks.org/mbostock/4342190
+      //"monotone" can also work. "basis" would skip the points on the sharp turns. "linear" is ugly
+        .curve(d3[(this._isFrameOnXaxis() && this.ui.curve) ? this.ui.curve : "curveLinear"])
+        .x(d => this.xScale(d[0]))
+        .y(d => this.yScale(d[1]));
+    }
+
+    /*
+     * REDRAW DATA POINTS:
+     * Here plotting happens
+     */
+    redrawDataPoints() {
+      this.services.layout.size;
+      this.MDL.x.scale.type;
+      this.MDL.y.scale.type;
+      this.MDL.x.scale.zoomed;
+      this.MDL.y.scale.zoomed;
+
+      const checkX = this.xScale.domain();
+      const checkY = this.yScale.domain();
+      if (!checkX.length || !checkY.length || [...checkX, ...checkY].some(s => s == null || isNaN(s)))
+        return VizabiSharedComponents.LegacyUtils.warn(`Line chart redrawDataPoints() short circuit because scale domain looks bad`, checkX, checkY);
+
+      const _this = this;
+      const KEY = this.KEY;
+      const {
+        entityLines,
+        entityLabels,
+        verticalNow,
+        xAxisEl
+      } = this.DOM;
+      const {
+        frame
+      } = this.MDL;
+
+      entityLines
+        .each(function(d) {
+          const entity = d3.select(this);
+            
+          const xy = d.values.slice(0, (_this.stepIndex - d.shiftIndex) <= 0 ? 0 : _this.stepIndex - d.shiftIndex)
+            .map(point => [point[_this._alias("x")], point[_this._alias("y")]])
+            .filter(d => d[1] || d[1] === 0);
+
+          // add last point
+          let currentPoint = _this.model.dataMap.getByStr(d[KEY]) || {};
+          currentPoint = {
+            x: currentPoint[_this._alias("x")],
+            y: currentPoint[_this._alias("y")]
+          };
+          if ((currentPoint.y || currentPoint.y === 0) && (currentPoint.x || currentPoint.x === 0)) {
+            xy.push([currentPoint.x, currentPoint.y]);
           }
 
-          entity.select(".vzb-lc-label").transition().duration(_this.duration).ease(d3.easeLinear).attr("transform", "translate(0," + d.valueY + ")");
-        } else {
-          entity.classed("vzb-hidden", true);
-        }
-      });
-      _this.verticalNow.transition().duration(_this.duration).ease(d3.easeLinear).attr("transform", "translate(" + _this.xScale(d3.min([_this.model.marker.axis_x.getZoomedMax(), _this.time])) + ",0)");
+          if (xy.length > 0) {
+            _this.cached[d[KEY]] = {
+              valueX: xy[xy.length - 1][0],
+              valueY: xy[xy.length - 1][1]
+            };
+          } else {
+            delete _this.cached[d[KEY]];
+          }
 
-      if (!_this.hoveringNow && _this.time - _this.model.time.start !== 0) {
-        if (!_this.ui.chart.hideXAxisValue) _this.xAxisEl.call(_this.xAxis.highlightTransDuration(_this.duration).highlightValue(_this.time));
-        _this.verticalNow.style("opacity", 1);
+          // the following fixes the ugly line butts sticking out of the axis line
+          //if(x[0]!=null && x[1]!=null) xy.splice(1, 0, [(+x[0]*0.99+x[1]*0.01), y[0]]);
+          const path2 = entity.select(".vzb-lc-line");
+
+          if (frame.playing && _this.totalLength_1[d[KEY]] === null) {
+            _this.totalLength_1[d[KEY]] = path2.node().getTotalLength();
+          }
+          const line = _this.line(xy) || "";
+
+          const path1 = entity.select(".vzb-lc-line-shadow")
+
+            .style("stroke-width", _this.shadowWidth + "px")
+            .attr("transform", "translate(0, " + (_this.shadowWidth - _this.lineWidth) + ")")
+            .attr("d", line);
+          path2
+          //.style("filter", "none")
+            .style("stroke-width", _this.lineWidth + "px")
+            .attr("d", line);
+
+          // this section ensures the smooth transition while playing and not needed otherwise
+          if (frame.playing) {
+            const totalLength = path2.node().getTotalLength();
+
+            path1
+              .interrupt()
+              .attr("stroke-dasharray", totalLength)
+              .attr("stroke-dashoffset", totalLength - _this.totalLength_1[d[KEY]])
+              .transition()
+              .delay(0)
+              .duration(_this.duration)
+              .ease(d3.easeLinear)
+              .attr("stroke-dashoffset", 0);
+            path2
+              .interrupt()
+              .attr("stroke-dasharray", totalLength)
+              .attr("stroke-dashoffset", totalLength - _this.totalLength_1[d[KEY]])
+              .transition()
+              .delay(0)
+              .duration(_this.duration)
+              .ease(d3.easeLinear)
+              .attr("stroke-dashoffset", 0);
+
+            _this.totalLength_1[d[KEY]] = totalLength;
+          } else {
+            //reset saved line lengths
+            _this.totalLength_1[d[KEY]] = null;
+
+            path1
+              .attr("stroke-dasharray", "none")
+              .attr("stroke-dashoffset", "none");
+
+            path2
+              .attr("stroke-dasharray", "none")
+              .attr("stroke-dashoffset", "none");
+          }
+
+        });
+
+      const addValueToLabel = this.data.length < this.ui.labels.min_number_of_entities_when_values_hide;
+
+      entityLabels
+        .each(function(d) {
+          const entity = d3.select(this);
+
+          const labelText = _this._getLabelText(d);
+          const label = labelText.length < 13 ? labelText : labelText.substring(0, 10) + "...";//"…";
+
+          if (_this.cached[d[KEY]]) {
+            d.valueX = _this.xScale(_this.cached[d[KEY]]["valueX"]);
+            d.valueY = _this.yScale(_this.cached[d[KEY]]["valueY"]);
+            entity
+              .classed("vzb-hidden", false)
+              .transition()
+              .duration(_this.duration)
+              .ease(d3.easeLinear)
+              .attr("transform", "translate(" + d.valueX + ",0)");
+
+            entity.select(".vzb-lc-circle")
+              .transition()
+              .duration(_this.duration)
+              .ease(d3.easeLinear)
+              .attr("cy", d.valueY + 1);
+
+            const value = _this.yAxis.tickFormat()(_this.cached[d[KEY]]["valueY"]);
+            if (addValueToLabel) {
+
+              entity.selectAll(".vzb-lc-labelname")
+                .text(label + " " + value);
+            } else {
+              entity.selectAll(".vzb-lc-labelname")
+                .text(label);
+            }
+            entity.select("title").text(label + " " + value);
+
+            entity.select(".vzb-lc-label")
+              .transition()
+              .duration(_this.duration)
+              .ease(d3.easeLinear)
+              .attr("transform", "translate(0," + d.valueY + ")");
+
+          } else {
+            entity
+              .classed("vzb-hidden", true);
+          }   
+        });
+
+
+      if (this._isFrameOnXaxis()){
+        verticalNow
+          .transition()
+          .duration(_this.duration)
+          .ease(d3.easeLinear)
+          .attr("transform", "translate(" + _this.xScale(_this.time) + ",0)");
+      }
+
+      if (this._isFrameOnXaxis() && !this.hoveringNow && this.time - frame.start !== 0) {
+        if (!_this.ui.hideXAxisValue) xAxisEl.call(
+          this.xAxis
+            .highlightTransDuration(this.duration)
+            .highlightValue(this.time)
+        );
+        verticalNow.style("opacity", 1);
       } else {
-        _this.verticalNow.style("opacity", 0);
+        if (!this.ui.hideXAxisValue) xAxisEl.call(
+          this.xAxis
+            .highlightValue("none")
+        );
+        verticalNow.style("opacity", 0);
       }
 
       // Call flush() after any zero-duration transitions to synchronously flush the timer queue
       // and thus make transition instantaneous. See https://github.com/mbostock/d3/issues/1951
-      if (_this.duration == 0) {
+      if (this.duration == 0) {
         d3.timerFlush();
       }
 
       // cancel previously queued simulation if we just ordered a new one
       // then order a new collision resolving
-      clearTimeout(_this.collisionTimeout);
-      _this.collisionTimeout = setTimeout(function () {
-        _this.entityLabels.call(_this.collisionResolver.time(_this.xScale(_this.time)));
-      }, _this.model.time.delayAnimations * 1.5);
-    });
-  },
-  entityMousemove: function entityMousemove(me, index, context, closestToMouse) {
-    var _this = context;
-    var KEY = _this.KEY;
-    var values = _this.values;
+      clearTimeout(this.collisionTimeout);
+      this.collisionTimeout = setTimeout(() => {
+        entityLabels.call(this.collisionResolver.time(this.xScale(this.time)));
+      }, this.duration * 1.5);
 
-    var mouse = d3.mouse(_this.element.node()).map(function (d) {
-      return parseInt(d);
-    });
-
-    var resolvedTime = _this.xScale.invert(mouse[0] - _this.margin.left);
-    if (_this.time - resolvedTime < 0) {
-      resolvedTime = _this.time;
-    } else if (resolvedTime < this.model.time["start"]) {
-      resolvedTime = this.model.time["start"];
     }
-    var resolvedValue = void 0;
 
-    var mousePos = mouse[1] - _this.margin.top;
+    /*
+     * RESIZE:
+     * Executed whenever the container is resized
+     * Ideally, it contains only operations related to size
+     */
+    updateSize() {
+      this.services.layout.size;
+      this.MDL.x.scale.zoomed;
+      this.MDL.y.scale.zoomed;
+      if (this.checkLayout()) return; //return if exists with error
 
-    if (!utils.isDate(resolvedTime)) resolvedTime = this.model.time.parse(resolvedTime);
+      const {
+        x,
+        y
+      } = this.MDL;
+      
+      const {
+        graph,
+        entityLabels,
+        linesContainerCrop,
+        labelsContainerCrop,
+        xAxisElContainer,
+        xAxisEl,
+        yAxisElContainer,
+        yAxisEl,
+        xTitle,
+        yTitle,
+        yInfo,
+        tooltip,
+        verticalNow,
+        projectionX,
+        projectionY
+      } = this.DOM;
 
-    this.model.marker.getFrame(resolvedTime, function (data) {
-      if (!_this._frameIsValid(data)) return;
-      //const nearestKey = _this.getNearestKey(_this.yScale.invert(mousePos), data.axis_y);
-      var nearestKey = _this.getNearestKey(mousePos, _this.dataHash, data.axis_y, _this.yScale.bind(_this));
-      resolvedValue = data.axis_y[nearestKey];
-      me = _this.dataHash[nearestKey];
-      if (!_this.model.marker.isHighlighted(me)) {
-        _this.model.marker.clearHighlighted();
-        _this.model.marker.highlightMarker(me);
+      const {
+        margin,
+        text_padding,
+        lollipopRadius,
+        limitMaxTickNumberX,
+        yAxisTitleBottomMargin,
+        infoElHeight
+      } = this.profileConstants;
+
+      const isRTL = this.services.locale.isRTL();
+
+
+      //adjust right this.margin according to biggest label
+
+      let longestLabelWidth = 0;
+
+      entityLabels.selectAll(".vzb-lc-labelname")
+        .attr("dx", text_padding)
+        .each(function() {
+          const width = this.getComputedTextLength();
+          if (width > longestLabelWidth) longestLabelWidth = width;
+        });
+
+      entityLabels.selectAll(".vzb-lc-circle")
+        .attr("r", this.shadowWidth ? lollipopRadius : lollipopRadius * 0.8);
+
+      const magicMargin = 20;
+      const marginRightAdjusted = Math.max(margin.right, longestLabelWidth + text_padding + magicMargin);
+
+      if(this.MDL.repeat.ncolumns == 1)
+        this.services.layout.setHGrid([this.width - marginRightAdjusted]);
+
+      //stage
+      this.cropHeight = (this.height - margin.top - margin.bottom) || 0;
+      this.cropWidth = (this.width - margin.left - marginRightAdjusted) || 0;
+
+      //if (this.cropHeight <= 0 || this.cropWidth <= 0) return utils.warn("Line chart updateSize() abort: vizabi container is too little or has display:none");
+      
+      linesContainerCrop
+        .attr("width", this.cropWidth)
+        .attr("height", Math.max(0, this.cropHeight));
+
+      labelsContainerCrop
+        .attr("width", this.cropWidth + marginRightAdjusted)
+        .attr("height", Math.max(0, this.cropHeight));
+
+      this.collisionResolver.height(this.cropHeight);
+
+      graph
+        .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+      this.yScale.range([this.cropHeight - lollipopRadius, lollipopRadius]);
+      this.xScale.range([this.rangeXShift, this.cropWidth * this.rangeXRatio + this.rangeXShift]);
+
+
+      this.yAxis.scale(this.yScale)
+        .tickSizeInner(-this.cropWidth)
+        .tickSizeOuter(0)
+        .tickPadding(6)
+        .tickSizeMinor(-this.cropWidth, 0)
+        .labelerOptions({
+          scaleType: y.scale.type,
+          toolMargin: margin,
+          limitMaxTickNumber: 6,
+          viewportLength: this.cropHeight,
+          formatter: this.localise
+        });
+
+      this.xAxis.scale(this.xScale)
+        .tickSizeInner(-this.cropHeight)
+        .tickSizeOuter(0)
+        .tickSizeMinor(-this.cropHeight, 0)
+        .tickPadding(6)
+        .labelerOptions({
+          scaleType: x.scale.type,
+          limitMaxTickNumber: limitMaxTickNumberX,
+          toolMargin: margin,
+          bump: text_padding * 2,
+          formatter: this.localise,
+          //showOuter: true
+        });
+
+      xAxisElContainer
+        .attr("width", this.cropWidth + text_padding * 2)
+        .attr("height", margin.bottom + this.cropHeight)
+        .attr("y", -1)
+        .attr("x", -text_padding);
+
+      xAxisEl
+        .attr("transform", "translate(" + (text_padding - 1) + "," + (this.cropHeight + 1) + ")");
+
+      yAxisElContainer
+        .attr("width", margin.left + this.cropWidth)
+        .attr("height", Math.max(0, this.cropHeight))
+        .attr("x", -margin.left);
+      yAxisEl
+        .attr("transform", "translate(" + (margin.left - 1) + "," + 0 + ")");
+
+      yAxisEl.call(this.yAxis);
+      xAxisEl.call(this.xAxis);
+
+      const xTitleText = xTitle.select("text").text(this.strings.title.X + this.strings.unit.X);
+
+      xTitle
+        .style("font-size", infoElHeight + "px")
+        .attr("transform", "translate(" +
+          (this.cropWidth + text_padding + yAxisTitleBottomMargin) + "," +
+          (this.cropHeight + xTitleText.node().getBBox().height  * 0.72) + ")");
+
+      if (xTitleText.node().getBBox().width > this.cropWidth - 100) xTitleText.text(this.strings.title.X);
+
+      const yTitleText = yTitle.select("text").text(this.strings.title.Y + this.strings.unit.Y);
+      if (yTitleText.node().getBBox().width > this.cropWidth) yTitleText.text(this.strings.title.Y);
+
+      yTitle
+        .style("font-size", infoElHeight + "px")
+        .attr("transform", "translate(" + (10 - margin.left + (isRTL ? infoElHeight * 1.4 : 0 )) + ", -" + yAxisTitleBottomMargin + ")");
+
+      const titleBBox = yTitle.node().getBBox();
+      const t = VizabiSharedComponents.LegacyUtils.transform(yTitle.node());
+
+      yInfo.attr("transform", "translate("
+        + (isRTL ? 10 - margin.left : titleBBox.x + t.translateX + titleBBox.width + infoElHeight * 0.4) + ","
+        + (t.translateY - infoElHeight * 0.8) + ")")
+        .select("svg").attr("width", infoElHeight + "px").attr("height", infoElHeight + "px");
+
+      // adjust the vertical dashed line
+      verticalNow.attr("y1", this.yScale.range()[0]).attr("y2", this.yScale.range()[1])
+        .attr("x1", 0).attr("x2", 0);
+      projectionX.attr("y1", this.yScale.range()[0]);
+      projectionY.attr("x2", this.xScale.range()[0]);
+
+      if (VizabiSharedComponents.LegacyUtils.isTouchDevice()) {
+        tooltip.classed("vzb-hidden", true);
+        verticalNow.style("opacity", 1);
+        projectionX.style("opacity", 0);
+        projectionY.style("opacity", 0);
+        xAxisEl.call(this.xAxis.highlightValue(this._isFrameOnXaxis() ? this.time : "none"));
+        yAxisEl.call(this.yAxis.highlightValue("none"));
+        graph.selectAll(".vzb-lc-entity").each(function() {
+          d3.select(this).classed("vzb-dimmed", false).classed("vzb-hovered", false);
+        });
+
+        this.hoveringNow = null;
       }
-      _this.hoveringNow = me;
 
-      if (utils.isNaN(resolvedValue)) return;
+      this.root.findChild({type: "_DataWarning"}).setOptions({
+        width: this.width,
+        height: this.height,
+        vertical: "top", 
+        horizontal: "right", 
+        right: 30,
+        top: margin.top + titleBBox.y,
+        wLimit: this.width - titleBBox.width - infoElHeight * 2
+      });
+    }
 
-      var scaledTime = _this.xScale(resolvedTime);
-      var scaledValue = _this.yScale(resolvedValue);
+    _entityMousemove(event) {
+      const _this = this;
+      const KEY = _this.KEY;
+      const {
+        frame,
+        highlighted: { data: { filter: highlightedFilter } },
+      } = this.MDL;
 
-      if (_this.ui.chart.whenHovering.showTooltip) {
+
+      const mouse = d3.pointer(event);
+
+      let resolvedTime = _this.xScale.invert(mouse[0] - _this.profileConstants.margin.left);
+      if (_this.time - resolvedTime < 0) {
+        resolvedTime = _this.time;
+      } else if (resolvedTime < frame.scale.domain[0]) {
+        resolvedTime = frame.scale.domain[0];
+      }
+      const mousePos = mouse[1] - _this.profileConstants.margin.top;
+
+      //if (!utils.isDate(resolvedTime)) resolvedTime = this.time.parse(resolvedTime);
+
+      const data = _this.model.getDataMapByFrameValue(resolvedTime);
+      const nearestKey = _this._getNearestKey(mousePos, data, _this._alias("y"), _this.yScale.bind(_this));
+      if (!data.hasByStr(nearestKey)) return;
+      const resolvedValue = data.getByStr(nearestKey)[_this._alias("y")];
+      const hoveringNow = {[KEY]: nearestKey};
+      if (!highlightedFilter.has(hoveringNow)) {
+        mobx.runInAction(() => {
+          highlightedFilter.config.markers = {};
+          highlightedFilter.set(hoveringNow);
+        });
+      }
+      _this.hoveringNow = hoveringNow;
+
+      if (VizabiSharedComponents.LegacyUtils.isNaN(resolvedValue)) return;
+
+      const scaledTime = _this.xScale(resolvedTime);
+      const scaledValue = _this.yScale(resolvedValue);
+      const {
+        tooltip,
+        verticalNow,
+        projectionX,
+        projectionY,
+        xAxisEl,
+        yAxisEl
+      } = this.DOM;
+
+      if (_this.ui.whenHovering.showTooltip) {
         //position tooltip
-        _this.tooltip
-        //.style("right", (_this.width - scaledTime + _this.margin.right ) + "px")
-        .style("left", scaledTime + _this.margin.left + "px").style("bottom", _this.height - scaledValue + _this.margin.bottom + "px").text(_this.yAxis.tickFormat()(resolvedValue)).classed("vzb-hidden", false);
+        tooltip
+        //.style("right", (_this.cropWidth - scaledTime + _this.marginRightAdjusted ) + "px")
+          .style("left", (scaledTime + _this.margin.left) + "px")
+          .style("bottom", (_this.cropHeight - scaledValue + _this.margin.bottom) + "px")
+          .text(_this.yAxis.tickFormat()(resolvedValue))
+          .classed("vzb-hidden", false);
       }
 
       // bring the projection lines to the hovering point
-      if (_this.ui.chart.whenHovering.hideVerticalNow) {
-        _this.verticalNow.style("opacity", 0);
+      if (_this.ui.whenHovering.hideVerticalNow) {
+        verticalNow.style("opacity", 0);
       }
 
-      if (_this.ui.chart.whenHovering.showProjectionLineX) {
-        _this.projectionX.style("opacity", 1).attr("y2", scaledValue).attr("x1", scaledTime).attr("x2", scaledTime);
+      if (_this.ui.whenHovering.showProjectionLineX) {
+        projectionX
+          .style("opacity", 1)
+          .attr("y2", scaledValue)
+          .attr("x1", scaledTime)
+          .attr("x2", scaledTime);
       }
-      if (_this.ui.chart.whenHovering.showProjectionLineY) {
-        _this.projectionY.style("opacity", 1).attr("y1", scaledValue).attr("y2", scaledValue).attr("x1", scaledTime);
+      if (_this.ui.whenHovering.showProjectionLineY) {
+        projectionY
+          .style("opacity", 1)
+          .attr("y1", scaledValue)
+          .attr("y2", scaledValue)
+          .attr("x1", scaledTime);
       }
 
-      if (_this.ui.chart.whenHovering.higlightValueX) _this.xAxisEl.call(_this.xAxis.highlightValue(resolvedTime).highlightTransDuration(0));
+      if (_this.ui.whenHovering.higlightValueX) xAxisEl.call(
+        _this.xAxis.highlightValue(this._isFrameOnXaxis() ? resolvedTime : "none").highlightTransDuration(0)
+      );
 
-      if (_this.ui.chart.whenHovering.higlightValueY) _this.yAxisEl.call(_this.yAxis.highlightValue(resolvedValue).highlightTransDuration(0));
+      if (_this.ui.whenHovering.higlightValueY) yAxisEl.call(
+        _this.yAxis.highlightValue(this._isFrameOnXaxis() ? resolvedValue : "none").highlightTransDuration(0)
+      );
 
       clearTimeout(_this.unhoverTimeout);
-    });
-  },
-  entityMouseout: function entityMouseout(me, index, context) {
-    var _this = context;
-    if (d3.event.relatedTarget && d3.select(d3.event.relatedTarget).classed("vzb-tooltip")) return;
+    }
 
-    // hide and show things like it was before hovering
-    _this.unhoverTimeout = setTimeout(function () {
-      _this.tooltip.classed("vzb-hidden", true);
-      _this.verticalNow.style("opacity", 1);
-      _this.projectionX.style("opacity", 0);
-      _this.projectionY.style("opacity", 0);
-      _this.xAxisEl.call(_this.xAxis.highlightValue(_this.time));
-      _this.yAxisEl.call(_this.yAxis.highlightValue("none"));
+    _entityMouseout(event) {
+      const _this = this;    
+      if (event.relatedTarget && d3.select(event.relatedTarget).classed("vzb-tooltip")) return;
 
-      _this.model.marker.clearHighlighted();
+      // hide and show things like it was before hovering
+      _this.unhoverTimeout = setTimeout(() => {
+        const DOM = _this.DOM;
 
-      _this.hoveringNow = null;
-    }, 300);
-  },
+        DOM.tooltip.classed("vzb-hidden", true);
+        DOM.verticalNow.style("opacity", 1);
+        DOM.projectionX.style("opacity", 0);
+        DOM.projectionY.style("opacity", 0);
+        DOM.xAxisEl.call(_this.xAxis.highlightValue(this._isFrameOnXaxis() ? _this.time : "none"));
+        DOM.yAxisEl.call(_this.yAxis.highlightValue("none"));
 
+        if (_this.hoveringNow) _this.MDL.highlighted.data.filter.delete(_this.hoveringNow);
 
-  /*
-   * Highlights all hovered lines
-   */
-  highlightLines: function highlightLines() {
-    var _this = this;
-    var KEYS = this.KEYS;
-    var KEY = this.KEY;
-    var OPACITY_HIGHLT = 1.0;
-    var OPACITY_HIGHLT_DIM = 0.3;
-    var OPACITY_SELECT = 1.0;
-    var OPACITY_REGULAR = this.model.marker.opacityRegular;
-    var OPACITY_SELECT_DIM = this.model.marker.opacitySelectDim;
+        _this.hoveringNow = null;
+      }, 300);
 
-    var someHighlighted = this.model.marker.highlight.length > 0;
-    this.someSelected = this.model.marker.select.length > 0;
+    }
 
-    // when pointer events need update...
-
-    this.nonSelectedOpacityZero = _this.model.marker.opacitySelectDim < 0.01;
-    var selected = {};
-    _this.model.marker.getSelected().map(function (d) {
-      selected[utils.getKey(d, KEYS)] = true;
-    });
-    //    const startTime = new Date();
-    this.entityLines.style("opacity", function (d) {
-      if (_this.model.marker.isHighlighted(d)) return OPACITY_HIGHLT;
-      if (_this.someSelected) {
-        return selected[d[KEY]] ? OPACITY_SELECT : OPACITY_SELECT_DIM;
-      }
-      if (someHighlighted) return OPACITY_HIGHLT_DIM;
-      return OPACITY_REGULAR;
-    });
-    this.entityLabels.style("opacity", function (d) {
-      if (_this.model.marker.isHighlighted(d)) {
-        d.sortValue = 1;
-        return OPACITY_HIGHLT;
-      } else {
-        d.sortValue = 0;
-      }
-      if (_this.someSelected) {
-        return selected[d[KEY]] ? OPACITY_SELECT : OPACITY_SELECT_DIM;
-      }
-      if (someHighlighted) return OPACITY_HIGHLT_DIM;
-      return OPACITY_REGULAR;
-    }).attr("pointer-events", function (d) {
-      if (!_this.someSelected || !_this.nonSelectedOpacityZero || selected[d[KEY]]) {
-        d.hidden = false;
-        return "visible";
-      } else {
-        d.hidden = true;
-        return "none";
-      }
-    }).sort(function (x, y) {
-      return d3.ascending(x.sortValue, y.sortValue);
-    });
     /*
-    //    const startTime = new Date();
-    //    console.log(new Date() - startTime);
-        this.graph.selectAll(".vzb-lc-entity").each(function() {
-          d3.select(this)
-            .style("opacity", d => {
-              if (_this.model.marker.isHighlighted(d)) return OPACITY_HIGHLT;
-              if (_this.someSelected) {
-                return selected[d[KEY]] ? OPACITY_SELECT : OPACITY_SELECT_DIM;
-              }
-              if (someHighlighted) return OPACITY_HIGHLT_DIM;
-              return OPACITY_REGULAR;
-            })
-        });
-    */
-  },
-  zoomToMaxMin: function zoomToMaxMin() {
-    if (this.model.marker.axis_x.getZoomedMin() != null && this.model.marker.axis_x.getZoomedMax() != null) {
-      this.xScale.domain([this.model.marker.axis_x.getZoomedMin(), this.model.marker.axis_x.getZoomedMax()]);
-      this.xAxisEl.call(this.xAxis);
-    }
+     * Highlights all hovered lines
+     */
+    highlightLines() {
+      const _this = this;
+      const KEY = this.KEY;
+      const OPACITY_HIGHLT = 1.0;
+      const OPACITY_HIGHLT_DIM = 0.3;
+      const OPACITY_SELECT = 1.0;
+      const OPACITY_REGULAR = this.ui.opacityRegular;
+      const OPACITY_SELECT_DIM = this.ui.opacitySelectDim;
+      const {
+        entityLines,
+        entityLabels
+      } = this.DOM;
+      const {
+        selected: { data: { filter: selectedFilter } },
+        highlighted: { data: { filter: highlightedFilter } },
+      } = this.MDL;
+      
+      const someHighlighted = (highlightedFilter.any());
+      this.someSelected = (selectedFilter.any());
 
-    if (this.model.marker.axis_y.getZoomedMin() != null && this.model.marker.axis_y.getZoomedMax() != null) {
-      if ((this.model.marker.axis_y.getZoomedMin() <= 0 || this.model.marker.axis_y.getZoomedMax() <= 0) && this.model.marker.axis_y.scaleType == "log") {
-        this.yScale = d3.scaleGenericlog().domain([this.model.marker.axis_y.getZoomedMin(), this.model.marker.axis_y.getZoomedMax()]).range(this.yScale.range());
-        this.model.marker.axis_y.scale = d3.scaleGenericlog().domain([this.model.marker.axis_y.getZoomedMin(), this.model.marker.axis_y.getZoomedMax()]).range(this.yScale.range());
-        this.yScale = this.model.marker.axis_y.scale;
-      } else {
-        this.yScale.domain([this.model.marker.axis_y.getZoomedMin(), this.model.marker.axis_y.getZoomedMax()]);
+      // when pointer events need update...
+
+      this.nonSelectedOpacityZero = OPACITY_SELECT_DIM < 0.01;
+      const selectedHash = {};
+      selectedFilter.markers.forEach((v, k) => {
+        selectedHash[k] = true;
       }
-      this.yAxisEl.call(this.yAxis);
-    }
-  },
-
-
-  /**
-   * Returns key from obj which value from values has the smallest difference with val
-   */
-  getNearestKey: function getNearestKey(val, obj, values, fn) {
-    //const startTime = new Date();
-    var KEYS = this.KEYS;
-    var keys = Object.keys(obj);
-
-    if (this.someSelected && this.nonSelectedOpacityZero) {
-      keys = this.model.marker.select.map(function (keyObj) {
-        return utils.getKey(keyObj, KEYS);
+      );
+      entityLines.style("opacity", (d) => {
+        if (highlightedFilter.has(d)) return OPACITY_HIGHLT;
+        if (_this.someSelected) {
+          return selectedHash[d[KEY]] ? OPACITY_SELECT : OPACITY_SELECT_DIM;
+        }
+        if (someHighlighted) return OPACITY_HIGHLT_DIM;
+        return OPACITY_REGULAR;
       });
-    }
-    var resKey = keys[0];
-    for (var i = 1; i < keys.length; i++) {
-      var key = keys[i];
+      entityLabels.style("opacity", (d) => {
+        if (highlightedFilter.has(d)) {
+          d.sortValue = 1;
+          return OPACITY_HIGHLT;
+        } else {
+          d.sortValue = 0;
+        }
+        if (_this.someSelected) {
+          return selectedHash[d[KEY]] ? OPACITY_SELECT : OPACITY_SELECT_DIM;
+        }
+        if (someHighlighted) return OPACITY_HIGHLT_DIM;
+        return OPACITY_REGULAR;
+      }).attr("pointer-events", d => {
+        if(!_this.someSelected || !_this.nonSelectedOpacityZero || selectedHash[d[KEY]]) {
+          d.hidden = false;
+          return "visible";   
+        } else {
+          d.hidden = true;
+          return "none";
+        }
+      })
+        .sort(function(a, b){
+          return d3.ascending(a.sortValue, b.sortValue);
+        });
 
-      if (Math.abs((fn ? fn(values[key]) : values[key]) - val) < Math.abs((fn ? fn(values[resKey]) : values[resKey]) - val)) {
-        resKey = key;
+    }
+
+    _zoomToMaxMin() {
+      if (
+        this.model.marker.axis_x.getZoomedMin() != null &&
+        this.model.marker.axis_x.getZoomedMax() != null) {
+        this.xScale.domain([this.model.marker.axis_x.getZoomedMin(), this.model.marker.axis_x.getZoomedMax()]);
+        this.xAxisEl.call(this.xAxis);
+      }
+
+      if (
+        this.model.marker.axis_y.getZoomedMin() != null &&
+        this.model.marker.axis_y.getZoomedMax() != null) {
+        if ((this.model.marker.axis_y.getZoomedMin() <= 0 || this.model.marker.axis_y.getZoomedMax() <= 0)
+          && this.model.marker.axis_y.scaleType == "log") {
+          this.yScale = d3.scaleGenericlog()
+            .domain([this.model.marker.axis_y.getZoomedMin(), this.model.marker.axis_y.getZoomedMax()])
+            .range(this.yScale.range());
+          this.model.marker.axis_y.scale = d3.scaleGenericlog()
+            .domain([this.model.marker.axis_y.getZoomedMin(), this.model.marker.axis_y.getZoomedMax()])
+            .range(this.yScale.range());
+          this.yScale = this.model.marker.axis_y.scale;
+        } else {
+          this.yScale.domain([this.model.marker.axis_y.getZoomedMin(), this.model.marker.axis_y.getZoomedMax()]);
+        }
+        this.yAxisEl.call(this.yAxis);
       }
     }
-    //console.log(new Date() - startTime);
-    return resKey;
+
+    /**
+     * Returns key from obj which value from values has the smallest difference with val
+     */
+    _getNearestKey(val, values, propName, fn) {
+      const keys = (this.someSelected && this.nonSelectedOpacityZero) ?
+        [...this.MDL.selected.data.filter.markers.keys()].filter(key => values.hasByStr(key))
+        :
+        [...values.keys()];
+
+      let resKey = keys[0];
+      for (let i = 1; i < keys.length; i++) {
+        let key = keys[i];
+        
+        if (Math.abs((fn ? fn(values.getByStr(key)[propName]) : values.getByStr(key)[propName]) - val) < Math.abs((fn ? fn(values.getByStr(resKey)[propName]) : values.getByStr(resKey)[propName]) - val)) {
+          resKey = key;
+        }
+      }
+      return resKey;
+    }
+
+    _alias(enc) {
+      return this.state.alias[enc] || enc;
+    }
+
   }
-});
 
-exports.default = LCComponent;
+  _VizabiLineChart.DEFAULT_UI = {
+    showForecast: false,
+    showForecastOverlay: true,
+    pauseBeforeForecast: true,
+    opacityHighlight: 1.0,
+    opacitySelect: 1.0,
+    opacityHighlightDim: 0.1,
+    opacitySelectDim: 0.3,
+    opacityRegular: 0.5,
+    hideXAxisValue: false,
+    curve: "curveMonotoneX",
+    whenHovering: {
+      showTooltip: false,
+      hideVerticalNow: false,
+      showProjectionLineX: false,
+      showProjectionLineY: false,
+      higlightValueX: false,
+      higlightValueY: false
+    },
+    labels: {
+      min_number_of_entities_when_values_hide: 3,
+    }
+  };
 
-/***/ }),
-/* 2 */
-/***/ (function(module, exports) {
+  const VizabiLineChart = mobx.decorate(_VizabiLineChart, {
+    "MDL": mobx.computed,
+    "height": mobx.computed,
+    "width": mobx.computed,
+    "profileConstants": mobx.computed
+  });
 
-// removed by extract-text-webpack-plugin
+  class LineChart extends VizabiSharedComponents.BaseComponent {
 
-/***/ }),
-/* 3 */
-/***/ (function(module, exports) {
+    constructor(config){
 
-module.exports = "<!-- LineChart Component -->\n<div class=\"vzb-linechart\">\n    <svg class=\"vzb-linechart-svg\">\n        <g class=\"vzb-lc-graph\">\n\n            <svg class=\"vzb-lc-axis-x\"><g></g></svg>\n            <svg class=\"vzb-lc-axis-y\"><g></g></svg>\n            <text class=\"vzb-lc-axis-x-value\"></text>\n            <text class=\"vzb-lc-axis-y-value\"></text>\n            <svg class=\"vzb-lc-lines-crop\">\n                <svg class=\"vzb-lc-lines\"></svg>\n                <line class=\"vzb-lc-projection-x\"></line>\n                <line class=\"vzb-lc-projection-y\"></line>\n            </svg>\n            <svg class=\"vzb-lc-labels-crop\">\n                <g class=\"vzb-lc-labels\">\n                    <line class=\"vzb-lc-vertical-now\"></line>\n                </g>\n            </svg>\n\n            <g class=\"vzb-lc-axis-y-title\"></g>\n            <g class=\"vzb-lc-axis-x-title\"></g>\n            <g class=\"vzb-lc-axis-y-info\"></g>\n\n            <g class=\"vzb-data-warning vzb-noexport\">\n                <svg></svg>\n                <text></text>\n            </g>\n\n\n            <!--filter id=\"vzb-lc-filter-dropshadow\"> \n              <feOffset result=\"offOut\" in=\"SourceGraphic\" dx=\"0\" dy=\"2\" />\n              <feColorMatrix result = \"matrixOut\" in = \"offOut\" type = \"matrix\"\n                             values = \"0.3 .0 .0 .0 .0\n                                       .0 .3 .0 .0 .0\n                                       .0 .0 .3 .0 .0\n                                       1.0 1.0 1.0 1.0 .0\"/>\n              <feGaussianBlur result=\"blurOut\" in=\"matrixOut\" stdDeviation=\"0.8\" />\n              <feBlend in=\"SourceGraphic\" in2=\"blurOut\" mode=\"normal\" />\n            </filter-->\n\n        </g>\n    </svg>\n    <div class=\"vzb-tooltip vzb-hidden\"></div>\n</div>\n";
+      const markerName = config.options.markerName || "line";
+      config.Vizabi.utils.applyDefaults(config.model.markers[markerName].config, LineChart.DEFAULT_CORE(markerName));  
 
-/***/ }),
-/* 4 */
-/***/ (function(module, exports, __webpack_require__) {
+      const marker = config.model.markers[markerName];
 
-module.exports = __webpack_require__(0);
+      config.name = "linechart";
 
+      config.subcomponents = [{
+        type: VizabiSharedComponents.Repeater,
+        placeholder: ".vzb-repeater",
+        model: marker,
+        options: {
+          ComponentClass: VizabiLineChart,
+          componentCssName: "vzb-linechart"
+        },
+        name: "chart"
+      },{
+        type: VizabiSharedComponents.TimeSlider,
+        placeholder: ".vzb-timeslider",
+        model: marker,
+        name: "time-slider"
+      },{
+        type: VizabiSharedComponents.SteppedSlider,
+        placeholder: ".vzb-speedslider",
+        model: marker,
+        name: "speed-slider"
+      },{
+        type: VizabiSharedComponents.TreeMenu,
+        placeholder: ".vzb-treemenu",
+        model: marker,
+        name: "tree-menu"
+      },{
+        type: VizabiSharedComponents.DataWarning,
+        placeholder: ".vzb-datawarning",
+        options: {button: ".vzb-datawarning-button"},
+        model: marker,
+        name: "data-warning"
+      },{
+        type: VizabiSharedComponents.DataNotes,
+        placeholder: ".vzb-datanotes",
+        model: marker
+      },{
+        type: VizabiSharedComponents.Dialogs,
+        placeholder: ".vzb-dialogs",
+        model: marker,
+        name: "dialogs"
+      },{
+        type: VizabiSharedComponents.ButtonList,
+        placeholder: ".vzb-buttonlist",
+        model: marker,
+        name: "buttons"
+      },{
+        type: VizabiSharedComponents.SpaceConfig,
+        placeholder: ".vzb-spaceconfig",
+        options: {button: ".vzb-spaceconfig-button"},
+        model: marker,
+        name: "space-config"
+      },{
+        type: VizabiSharedComponents.ErrorMessage,
+        placeholder: ".vzb-errormessage",
+        model: marker,
+        name: "error-message"
+      }];
 
-/***/ })
-/******/ ]);
+      config.template = `
+      <div class="vzb-repeater vzb-linechart"></div>
+      <div class="vzb-animationcontrols">
+        <div class="vzb-timeslider"></div>
+        <div class="vzb-speedslider"></div>
+      </div>
+      <div class="vzb-sidebar">
+        <div class="vzb-dialogs"></div>
+        <div class="vzb-buttonlist"></div>
+      </div>
+      <div class="vzb-treemenu"></div>
+      <div class="vzb-datawarning"></div>
+      <div class="vzb-spaceconfig"></div>
+      <div class="vzb-datanotes"></div>
+      <div class="vzb-errormessage"></div>
+    `;
+
+      config.services = {
+        Vizabi: new VizabiSharedComponents.CapitalVizabiService({Vizabi: config.Vizabi}),
+        locale: new VizabiSharedComponents.LocaleService(config.locale),
+        layout: new VizabiSharedComponents.LayoutService(config.layout)
+      };
+
+      super(config);
+    }
+  }
+
+  LineChart.DEFAULT_UI = {
+    chart: {
+    },
+  };
+  LineChart.DEFAULT_CORE = (markerName) => ({
+    requiredEncodings: ["x", "y"],
+    encoding: {
+      "selected": {
+        modelType: "selection"
+      },
+      "highlighted": {
+        modelType: "selection"
+      },
+      "y": {
+        scale: {
+          allowedTypes: ["linear", "log", "genericLog", "pow"]
+        }
+      },
+      "x": {
+        data: {
+          concept: { 
+            ref: `markers.${markerName}.encoding.frame.data.concept`
+          }
+        },
+        scale: {
+          allowedTypes: ["linear", "log", "genericLog", "pow", "time"]
+        }
+      },
+      "color": {
+        data: {
+          concept: { filter: { concept_type: { $in: ["entity_set", "entity_domain"]} } },
+          
+          allow: {
+            space: {
+              filter: {
+                concept_type: { $ne: "time" }
+              }
+            }
+          }
+        },
+        scale: {
+          modelType: "color"
+        }
+      },
+      "label": {
+        data: {
+          modelType: "entityPropertyDataConfig",
+        }
+      },
+      "repeat": {
+        modelType: "repeat",
+        allowEnc: ["y", "x"]
+      },
+      frame: {
+        modelType: "frame"
+      }
+    }
+  });
+
+  LineChart.versionInfo = { version: "3.7.5", build: 1635167409425, package: {"homepage":"https://github.com/vizabi/linechart#readme","name":"@vizabi/linechart","description":"Vizabi line chart"}, sharedComponents: VizabiSharedComponents.versionInfo};
+
+  return LineChart;
+
+})));
 //# sourceMappingURL=linechart.js.map
