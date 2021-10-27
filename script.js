@@ -21,14 +21,14 @@ var BUBBLE_MODEL = {
       olddata: {
         modelType: "bw",
         service: "https://big-waffle.gapminder.org",
-        dataset: NEW_DATASET,
-        name: NEW_DATASET
+        dataset: OLD_DATASET,
+        name: OLD_DATASET
       },
       newdata: {
         modelType: "bw",
         service: "https://big-waffle.gapminder.org",
-        dataset: OLD_DATASET,
-        name: OLD_DATASET
+        dataset: NEW_DATASET,
+        name: NEW_DATASET
       },
       sg: {
         modelType: "bw",
