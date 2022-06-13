@@ -1,6 +1,9 @@
 var urlParams = new URLSearchParams(window.location.search)
-var OLD_DATASET = urlParams.get("olddata") || "wdi-master";
-var NEW_DATASET = urlParams.get("newdata") || "wdi-develop";
+var OLD_DATASET = urlParams.get("olddata") || "sg-master";
+var OLD_VERSION = urlParams.get("oldversion") || null;
+var NEW_DATASET = urlParams.get("newdata") || "SG-develop";
+var NEW_VERSION = urlParams.get("newversion") || null;
+var INDICATOR = urlParams.get("indicator") || null;
 
 
 function insertUrlParam(key, value) {
@@ -22,13 +25,15 @@ var BUBBLE_MODEL = {
         modelType: "bw",
         service: "https://big-waffle.gapminder.org",
         dataset: OLD_DATASET,
-        name: OLD_DATASET
+        name: OLD_DATASET,
+        version: OLD_VERSION
       },
       newdata: {
         modelType: "bw",
         service: "https://big-waffle.gapminder.org",
         dataset: NEW_DATASET,
-        name: NEW_DATASET
+        name: NEW_DATASET,
+        version: NEW_VERSION
       },
       sg: {
         modelType: "bw",
@@ -209,10 +214,10 @@ var BUBBLE_MODEL = {
 
     "chart": {
       show_ticks: true,
-      showForecast: false,
-      showForecastOverlay: true,
+      showForecast: true,
+      showForecastOverlay: false,
       pauseBeforeForecast: true,
-      endBeforeForecast: "2019",
+      endBeforeForecast: "2050",
       opacityHighlight: 1.0,
       opacitySelect: 1.0,
       opacityHighlightDim: 0.1,
@@ -259,7 +264,7 @@ var BUBBLE_MODEL = {
       doubtRange: [1.0, 0.3, 0.2]
     },
     "tree-menu": {
-      "showDataSources": false,
+      "showDataSources": true,
       "folderStrategyByDataset": {
         "sg": "folder:other_datasets",
         "newdata": "folder:newdata",
@@ -422,8 +427,8 @@ var LINE_MODEL = {
       }
     },
     chart: {
-      showForecast: false,
-      showForecastOverlay: true,
+      showForecast: true,
+      showForecastOverlay: false,
       pauseBeforeForecast: true,
       endBeforeForecast: "2019",
       opacityHighlight: 1.0,
@@ -450,7 +455,7 @@ var LINE_MODEL = {
       doubtRange: [1.0, 0.3, 0.2]
     },
     "tree-menu": {
-      "showDataSources": false,
+      "showDataSources": true,
       "folderStrategyByDataset": {
         "sg": "folder:other_datasets",
         "newdata": "folder:newdata",
@@ -461,7 +466,11 @@ var LINE_MODEL = {
 };
 
 
-
+if (INDICATOR) {
+  BUBBLE_MODEL.model.markers.bubble.encoding.x.data.concept = INDICATOR;
+  BUBBLE_MODEL.model.markers.bubble.encoding.y.data.concept = INDICATOR;
+  LINE_MODEL.model.markers.line.encoding.y.data.concept = INDICATOR;
+}
 
 var ddfcsv = new DDFCsvReader.getDDFCsvReaderObject();
 var ddfReader = DDFServiceReader.getReader();
@@ -503,8 +512,10 @@ vizLine = new LineChart({
 setTimeout(()=>{
   mobx.autorun(()=>{
     const concept = vizLine.model.markers.line.encoding.y.data.concept;
+    if (!concept) return;
     vizbubble.model.markers.bubble.encoding.x.data.config.concept = concept;
     vizbubble.model.markers.bubble.encoding.y.data.config.concept = concept;
+    insertUrlParam("indicator",concept);
   })
 },3000)
 

@@ -1,4 +1,4 @@
-// https://github.com/vizabi/@vizabi/shared-components#readme v1.19.0 build 1635167413981 Copyright 2021 Gapminder Foundation and contributors
+// https://github.com/vizabi/@vizabi/shared-components#readme v1.24.2 build 1654768518897 Copyright 2022 Gapminder Foundation and contributors
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? factory(exports, require('mobx')) :
   typeof define === 'function' && define.amd ? define(['exports', 'mobx'], factory) :
@@ -1956,15 +1956,19 @@
     return obj;
   }
 
-  function mergeInTarget(target, source) {
+  function mergeInTarget(target, source, blocks = [], keystack = "") {
     for (const key in source) {
       if (typeof source[key] === "object" && !Array.isArray(source[key]) && source[key] !== null) {
-        if (target[key]) {
-          mergeInTarget(target[key], source[key]);
+        //if an object exists in target and it's not declared a block
+        if ( target[key] && !blocks.some(s => (keystack + "." + key).endsWith(s)) ) {
+          //recursively merge that object in target, pass on possible blocks and increment the keystack
+          mergeInTarget(target[key], source[key], blocks, keystack + "." + key);
         } else {
+          //create new object by cloning from source
           target[key] = deepExtend({}, source[key]);
         }
       } else {
+        //replace target prop with one from the source
         target[key] = source[key];
       }
     }
@@ -1986,6 +1990,41 @@
     return target;
   }
 
+  /**
+   * Recursively walks through forConfig and tries to match corresponding parts of againstConfig
+   * Returns a value from 0 to 1 that shows how similar are the two given configs
+   * @param {Object} forConfig 
+   * @param {Object} againstConfig 
+   * @param {String} specialKeySubstring 
+   * @returns {Number} similaryty score from 0 to 1
+   */
+   function computeObjectsSimilarityScore(forConfig, againstConfig, specialKeySubstring = ""){
+    function isThereASpecialKeySubstringInBoth(a, b, specialKeySubstring) {
+      return specialKeySubstring
+        && Object.keys(a).find(f => f.includes(specialKeySubstring))
+        && Object.keys(b).find(f => f.includes(specialKeySubstring));
+    }
+    function compare(a, b) {
+        let score = 0;
+        let total = 0;
+        for (const key in a) {
+          if (typeof a[key] === "object" && !Array.isArray(a[key]) && a[key] != null && b[key] != null) {
+            const deeper = compare(a[key], b[key]);
+            score += deeper.score;
+            total += deeper.total;
+          } else {
+            if (a[key] == b[key]) score ++;
+            else if (a[key] != null && b[key] != null) score += 0.5;
+            else if (isThereASpecialKeySubstringInBoth(a, b, specialKeySubstring)) score += 0.1;
+            total++;
+          }
+        }
+        return {score, total};
+    }
+    const result = compare(forConfig, againstConfig);
+    return result.score / result.total;
+  }
+
   var _Utils = /*#__PURE__*/Object.freeze({
     __proto__: null,
     STATUS: STATUS,
@@ -2002,7 +2041,8 @@
     getChildrenDefaultState: getChildrenDefaultState,
     clearEmpties: clearEmpties,
     mergeInTarget: mergeInTarget,
-    replaceProps: replaceProps
+    replaceProps: replaceProps,
+    computeObjectsSimilarityScore: computeObjectsSimilarityScore
   });
 
   //d3.axisSmart
@@ -3148,7 +3188,7 @@
       const _this = this;
       return {
         mouseOver(event) {
-          const mouse = d3.pointer(event);
+          const mouse = d3.pointer(event, _this.context.element.node());
           _this._setTooltip(d3.select(event.target).attr("data-text"), mouse[0], mouse[1]);
         },
         mouseOut() {
@@ -3278,7 +3318,7 @@
   d3.selection.prototype.onTap = onTap;
   d3.selection.prototype.onLongTap = onLongTap;
 
-  const versionInfo = {version: "1.19.0", build: 1635167413981, package: {"contributors":[{"name":"Jasper","url":"https://github.com/jheeffer"},{"name":"Angie","url":"https://github.com/angieskazka"},{"name":"Dima","url":"https://github.com/dab2000"},{"name":"Ola","url":"https://github.com/olarosling"}],"author":{"name":"Gapminder Foundation","url":"https://www.gapminder.org","email":"info@gapminder.org"},"homepage":"https://github.com/vizabi/@vizabi/shared-components#readme","name":"@vizabi/shared-components","description":"Vizabi shared components"}};
+  const versionInfo = {version: "1.24.2", build: 1654768518897, package: {"contributors":[{"name":"Jasper","url":"https://github.com/jheeffer"},{"name":"Angie","url":"https://github.com/angieskazka"},{"name":"Dima","url":"https://github.com/dab2000"},{"name":"Ola","url":"https://github.com/olarosling"}],"author":{"name":"Gapminder Foundation","url":"https://www.gapminder.org","email":"info@gapminder.org"},"homepage":"https://github.com/vizabi/@vizabi/shared-components#readme","name":"@vizabi/shared-components","description":"Vizabi shared components"}};
   const Icons = iconset;
   const Utils = _Utils;
   const LegacyUtils = _LegacyUtils;
@@ -3410,11 +3450,17 @@
       })();
     }
 
-    getProfileConstants(normalConstants = {}, forProjector = {}){
-      if (!this.projector) 
-        return normalConstants[this.profile] || {};
-      else
-        return Object.assign({}, normalConstants[this.profile] || {}, forProjector[this.profile] || {});
+    getProfileConstants(normalConstants = {}, forProjector = {}, positionInFacet){
+      const result = this.projector
+        ? deepExtend({}, normalConstants[this.profile] || {}, forProjector[this.profile] || {})
+        : deepExtend({}, normalConstants[this.profile] || {});
+      if(positionInFacet){
+        if(!positionInFacet.row.first) result.margin.top = 0;
+        if(!positionInFacet.row.last) result.margin.bottom = 2;
+        if(!positionInFacet.column.first) result.margin.left = 0;
+        if(!positionInFacet.column.last) result.margin.right = 0;
+      }
+      return result;
     }
 
     setProjector() {
@@ -3949,7 +3995,7 @@
 
     draw() {
       this.localise = this.services.locale.auto();
-
+      if(this.element.classed("vzb-hidden")) return;
       if(this._updateLayoutProfile()) return;
 
       this.addReaction(this._updateSize);
@@ -4119,9 +4165,935 @@
 
   }
 
-  const decorated$b = mobx.decorate(BrushSlider, {
+  const decorated$a = mobx.decorate(BrushSlider, {
     "MDL": mobx.computed
   });
+
+  class _AddGeo extends BaseComponent {
+
+    constructor(config){
+      config.template = `
+      <div class="vzb-addgeo-background vzb-hidden"></div>
+      <div class="vzb-addgeo-button"></div>
+      <input class="vzb-addgeo-searchbox vzb-hidden" type="search" required="" placeholder="Search...">
+      <ul class="vzb-addgeo-matches vzb-hidden"></ul>
+      </div>
+    `;
+      config.subcomponents = [];
+     
+      super(config);
+    }
+
+    setup(options) {
+      const _this = this;
+
+      this.DOM = {
+        background: this.element.select(".vzb-addgeo-background"),
+        button: this.element.select(".vzb-addgeo-button"),
+        searchbox: this.element.select(".vzb-addgeo-searchbox"),
+        matches: this.element.select(".vzb-addgeo-matches")
+      };
+
+      this.catalog = [];
+      this.entitySetsColorScale = d3.scaleOrdinal(d3.schemePastel2);
+      this.element.classed("vzb-hidden", true);
+
+      this.DOM.button.on("click", () => {
+        _this.DOM.searchbox.classed("vzb-hidden", false).node().focus();
+        _this.DOM.background.classed("vzb-hidden", false);
+        _this.root.children.forEach(c => {
+          c.element.classed("vzb-blur", c != _this);
+        });
+      });
+
+      this.DOM.searchbox.on("keyup", function(event){
+        _this.search(this.value);
+        if(event.key === "Escape") {
+          _this.cancelSearch();
+        }
+      });
+
+      this.DOM.background.on("click", () => {
+        this.cancelSearch();
+      });
+
+      this.PROFILE_CONSTANTS = options.PROFILE_CONSTANTS;
+      this.PROFILE_CONSTANTS_FOR_PROJECTOR = options.PROFILE_CONSTANTS_FOR_PROJECTOR;
+      this.xAlign = options.xAlign;
+      this.yAlign = options.yAlign;
+    }
+
+    draw(){
+      this.localise = this.services.locale.auto();
+      this.addReaction(this.buildList);
+      this.addReaction(this.updateSize);
+      this.addReaction(this.redraw);
+    }
+    
+    redraw(){
+      this.element.classed("vzb-hidden", this.activePreset.mode !== "show");
+      this.DOM.button.text(this.localise("buttons/addgeo"));
+      this.DOM.searchbox.attr("placeholder", this.localise("buttons/addgeo"));
+    }
+
+
+    updateSize() {
+      this.services.layout.size; //watch
+
+      this.profileConstants = this.services.layout.getProfileConstants(this.PROFILE_CONSTANTS, this.PROFILE_CONSTANTS_FOR_PROJECTOR);
+
+      const {
+        margin,
+        dy,
+        dx,
+      } = this.profileConstants;
+
+      this.element.style("top", this.yAlign == "top" ? margin.top + (dy||0) + "px" : null);
+      this.element.style("bottom", this.yAlign == "bottom" ? margin.bottom + (dy||0) + "px" : null);
+      this.element.style("left", this.xAlign == "left" ? margin.left + (dx||0) + "px" : null);
+      this.element.style("right", this.xAlign == "right" ? margin.right + (dx||0) + "px" : null);
+    }
+
+    get activePreset(){
+      const PRESETS = mobx.toJS(this.root.model.config.presets) || PRESETS_DEFAULT;
+
+      PRESETS.flat().forEach(p => {
+        p.score = computeObjectsSimilarityScore(p.config, mobx.toJS(this.model.config), "is--"); 
+      });      
+      const topScore = d3.max(PRESETS.flat(), d => d.score);
+      return PRESETS.flat().find(f => f.score === topScore);
+    }
+
+    buildList(){
+      this.model.data.spaceCatalog.then(spaceCatalog => {
+        for (const dim in spaceCatalog) {
+          const filterSpec = this.model.encoding.show.data.filter.dimensions[dim];
+          if (spaceCatalog[dim].entities) this.catalog = [...spaceCatalog[dim].entities.filter(filterSpec).values()];
+        }    });
+    }
+
+    cancelSearch(){
+      this.DOM.searchbox.classed("vzb-hidden", true);
+      this.DOM.searchbox.node().value = "";
+      this.DOM.matches.selectAll("li").remove();
+      this.DOM.matches.classed("vzb-hidden", true);
+      this.DOM.background.classed("vzb-hidden", true);
+
+      this.root.children.forEach(c => {
+        c.element.classed("vzb-blur", false);
+      });
+    }
+
+    search(string){
+      if(!string || string.length < 3) {
+        this.DOM.matches.selectAll("li").remove();
+        this.DOM.matches.classed("vzb-hidden", true);
+        return;
+      }
+
+      const matches = this.catalog.filter(f => f.name.toLowerCase().trim().includes(string.toLowerCase().trim()) || f[Symbol.for("key")].includes(string.toLowerCase().trim()))
+        .map(d => {
+          d.isness = Object.keys(d).filter(f => f.includes("is--") && d[f]).map(m => {
+            return {
+              id: m,
+              name: this.model.data.source.getConcept(m.replace("is--",""))?.name
+            }
+          });
+          return d;
+        })
+        .sort((x, y) => d3.ascending(x.isness.map(k => k.id).join(), y.isness.map(k => k.id).join()));
+      
+      this.DOM.matches.classed("vzb-hidden", !matches.length);
+      this.DOM.matches.selectAll("li").remove();
+      this.DOM.matches.selectAll("li")
+        .data(matches)
+        .enter().append("li")
+        .html((d) => {
+          return d.name + d.isness.map(m => `<span class="vzb-dialog-isness" style="background-color:${this.entitySetsColorScale(m.id)}">${m.name}</span>`).join("");
+        })
+        .on("click", (event, d) => {
+          this.model.data.filter.addToDimensionsFirstINstatement(d, this.activePreset.loosePath);
+          this.cancelSearch();
+        });
+    }
+
+  }
+
+  const AddGeo = mobx.decorate(_AddGeo, {
+    "activePreset": mobx.computed
+  });
+
+  const CollectionMixin$2 = superClass => class extends superClass {
+    //static _collection = {};
+    static add(name, addedClass) {
+      this._collection[name] = addedClass;
+    }
+    static get(name) { return CollectionMixin$2._collection[name];}
+  };
+
+  CollectionMixin$2._collection = {};
+
+  class Button extends CollectionMixin$2(BaseComponent) {
+    constructor (config) {
+      super(config);
+
+      const {title, icon, func, required, statebind, statebindfunc, ignoreSize} = config;
+      this.title = title;
+      this.icon = icon;
+      this.func = func;
+      this.required = required;
+      this.statebind = statebind;
+      this.statebindfunc = statebindfunc;
+      this.ignoreSize = ignoreSize;
+    }
+  }
+
+  Button.BaseClass = Button;
+
+  const CollectionMixin$1 = superClass => class extends superClass {
+    //static _collection = {};
+    static add(name, addedClass) {
+      CollectionMixin$1._collection[name] = addedClass;
+    }
+    static get(name) { return CollectionMixin$1._collection[name];}
+  };
+
+  CollectionMixin$1._collection = {};
+
+  class Chart extends CollectionMixin$1(BaseComponent) {}
+
+  /*!
+   * VIZABI BUTTONLIST
+   * Reusable buttonlist component
+   */
+
+  //default existing buttons
+  const class_active$2 = "vzb-active";
+  const class_hidden = "vzb-hidden";
+  const class_active_locked = "vzb-active-locked";
+  const class_unavailable = "vzb-unavailable";
+
+  class ButtonList extends BaseComponent {
+
+    constructor(config) {
+
+      super(config);
+    } 
+
+    setup() {
+
+      this._available_buttons = {
+        "find": {
+          title: "buttons/find",
+          icon: "search",
+          required: false
+        },
+        "show": {
+          title: "buttons/show",
+          icon: "asterisk",
+          required: false
+        },
+        "moreoptions": {
+          title: "buttons/more_options",
+          icon: "gear",
+          required: true
+        },
+        "colors": {
+          title: "buttons/colors",
+          icon: "paintbrush",
+          required: false
+        },
+        "mapcolors": {
+          title: "buttons/mapcolors",
+          icon: "paintbrush",
+          required: false
+        },
+        "size": {
+          title: "buttons/size",
+          icon: "circle",
+          required: false
+        },
+        "zoom": {
+          title: "buttons/zoom",
+          icon: "cursorPlus",
+          required: false
+        },
+        "fullscreen": {
+          title: "buttons/expand",
+          icon: "expand",
+          func: this.toggleFullScreen.bind(this),
+          required: true
+        },
+        "trails": {
+          title: "buttons/trails",
+          icon: "trails",
+          func: this.toggleBubbleTrails.bind(this),
+          required: false,
+          statebind: "MDL.trail.show",
+          statebindfunc: this.setBubbleTrails.bind(this)
+        },
+        "forecast": {
+          title: "buttons/forecast",
+          icon: "forecast",
+          func: this.toggleTimeForecast.bind(this),
+          required: false,
+          statebind: "MDL.frame.showForecast",
+          statebindfunc: this.setTimeForecast.bind(this)
+        },
+        "lock": {
+          title: "buttons/lock",
+          icon: "lock",
+          func: this.toggleBubbleLock.bind(this),
+          required: false,
+          statebind: "root.ui.chart.lockNonSelected",
+          statebindfunc: this.setBubbleLock.bind(this)
+        },
+        "inpercent": {
+          title: "buttons/inpercent",
+          icon: "percent",
+          func: this.toggleInpercent.bind(this),
+          required: false,
+          statebind: "root.ui.chart.inpercent",
+          statebindfunc: this.setInpercent.bind(this)
+        },
+        "presentation": {
+          title: "buttons/presentation",
+          icon: "presentation",
+          func: this.togglePresentationMode.bind(this),
+          required: false,
+          statebind: "root.ui.presentation",
+          statebindfunc: this.setPresentationMode.bind(this)
+        },
+        "sidebarcollapse": {
+          title: "buttons/sidebar_collapse",
+          icon: "angleDoubleLeft",
+          func: this.toggleSidebarCollapse.bind(this),
+          required: true,
+          statebind: "root.ui.sidebarCollapse",
+          statebindfunc: this.setSidebarCollapse.bind(this),
+          ignoreSize: true
+        },
+        "about": {
+          title: "buttons/about",
+          icon: "about",
+          required: false
+        },
+        "repeat": {
+          title: "buttons/repeat",
+          icon: "repeat",
+          required: false
+        },
+        "axes": {
+          title: "buttons/axes",
+          icon: "axes",
+          required: false
+        },
+        "axesmc": {
+          title: "buttons/axesmc",
+          icon: "axes",
+          required: false
+        },
+        "stack": {
+          title: "buttons/stack",
+          icon: "stack",
+          required: false
+        },
+        "side": {
+          title: "buttons/side",
+          icon: "side",
+          required: false
+        },
+        "_default": {
+          title: "Button",
+          icon: "asterisk",
+          required: false
+        }
+      };
+
+      this._active_comp = false;
+
+      // this.model_binds = {
+      //   "change:state.marker.select": function(evt, path) {
+      //     if (!_this._readyOnce) return;
+      //     if (path.indexOf("select.labelOffset") !== -1) return;
+
+      //     _this.setBubbleTrails();
+      //     _this.setBubbleLock();
+      //     _this._toggleButtons();
+
+
+      //     //scroll button list to end if bottons appeared or disappeared
+      //     // if(_this.entitiesSelected_1 !== (_this.model.state.marker.select.length > 0)) {
+      //     //   _this.scrollToEnd();
+      //     // }
+      //     // _this.entitiesSelected_1 = _this.model.state.marker.select.length > 0;
+      //   },
+      //   "change:ui.chart": function(evt, path) {
+      //     if (!_this._readyOnce) return;
+
+      //     if (path.indexOf("lockActive") > -1 || path.indexOf("lockUnavailable") > -1) {
+      //       _this.setBubbleLock();
+      //     }
+      //   }
+      // };
+
+      // config.ui is same as this.model.ui here but this.model.ui is not yet available because constructor hasn't been called.
+      // can't call constructor earlier because this.model_binds needs to be complete before calling constructor
+      // builds model
+      //this._super(config, context);
+
+      this.validatePopupButtons(this.root.ui.buttons.buttons, this.root.ui.dialogs.dialogs);
+
+      this.element.selectAll("div").remove();
+
+      // // // // this.root.findChildByName("gapminder-dialogs").on("close", (evt, params) => {
+      // // // //   _this.setButtonActive(params.id, false);
+      // // // // });
+
+
+      // // if button_expand has been passed in with boolean param or array must check and covert to array
+      // if (button_expand){
+      //   this.model.ui.dialogs.sidebar = (button_expand === true) ? this.model.ui.buttons : button_expand;
+      // }
+
+      // if (button_expand && button_expand.length !== 0) {
+      //     d3.select(this.root.element).classed("vzb-dialog-expand-true", true);
+      // }
+
+
+      // (button_expand||[]).forEach(function(button) {
+      //   if (button_list.indexOf(button) === -1) {
+      //     button_list.push(button);
+      //   }
+      // });
+
+      //this.model.ui.buttons = button_list;
+
+      //add buttons and render components
+
+      //store body overflow
+      this._prev_body_overflow = document.body.style.overflow;
+
+      //TODO: maybe do the initial state setting here for all buttons
+      if(this.root.ui.buttons.buttons.includes("sidebarcollapse")) this.setSidebarCollapse();
+
+      // this.setBubbleTrails();
+      // this.setTimeForecast();
+      // this.setBubbleLock();
+      // this.setInpercent();
+      // this.setPresentationMode();
+    }
+
+    draw() {
+      this.MDL = {
+        frame: this.model.encoding.frame
+      };
+      this.localise = this.services.locale.auto();
+
+      this._dialogs = this.root.findChild({type: "Dialogs"});
+      if(!this._dialogs) console.warn("Buttonlist was unable to find a subcomponent of type 'Dialogs' in root component. Could be that index.js of a tool is lacking a configuration.");
+
+      const button_expand = (this.root.ui.dialogs.dialogs || {}).sidebar || [];
+      const button_list = [].concat(this.root.ui.buttons.buttons);
+      this._addButtons(button_list, button_expand);
+      this.addReaction(this._localiseButtons);
+      this.addReaction(this._toggleButtons);
+      this.addReaction(this._bindButtonState);
+
+    }
+
+    _bindButtonState() {
+      this.root.ui.buttons.buttons.forEach(buttonId => {
+        const button = this._available_buttons[buttonId];
+        if (button) {
+          if (button.statebind) {
+            this.addReaction(() => {
+              //_this.model_binds["change:" + button.statebind] = function(evt) {
+              //if (!_this._readyOnce) return;
+              button.statebindfunc(buttonId, getProp(this, button.statebind.split(".")));
+            });
+          } else {
+            this.addReaction(() => {
+              const dialog = this._dialogs.findChild({ name: buttonId});
+              if (!dialog) return;
+              const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + buttonId + "']");
+              btn.classed(class_active$2, dialog.getOpen());
+            });
+          }
+        }
+      });
+      //dispose reaction
+      this.reactions.get(this._bindButtonState)();
+    }
+
+    proceedClick(id) {
+      const _this = this;
+      const btn_config = _this._available_buttons[id];
+
+      if (btn_config && btn_config.func) {
+        btn_config.func(id);
+      } else {
+        this._dialogs.toggleDialogOpen(id);
+      }
+    }
+
+    validatePopupButtons(buttons, dialogs) {
+      const _this = this;
+
+      const popupDialogs = dialogs.popup;
+      const popupButtons = buttons.filter(d => (_this._available_buttons[d] && !_this._available_buttons[d].func));
+      for (let i = 0, j = popupButtons.length; i < j; i++) {
+        if (popupDialogs.indexOf(popupButtons[i]) == -1) {
+          return error('Buttonlist: bad buttons config: "' + popupButtons[i] + '" is missing in popups list');
+        }
+      }
+      return false; //all good
+    }
+
+    /*
+     * reset buttons show state
+     */
+    _showAllButtons() {
+      // show all existing buttons
+      const buttons = this.element.selectAll(".vzb-buttonlist-btn");
+      buttons.each(function() {
+        const button = d3.select(this);
+        button.style("display", "");
+      });
+    }
+
+    _localiseButtons() {
+      const _this = this;
+      this.services.locale.id;
+      this.element.selectAll("span[data-localise]").each(function() {
+        const view = d3.select(this);
+        view.text(_this.localise(view.attr("data-localise")));
+      });
+    }
+
+    /*
+    * determine which buttons are shown on the buttonlist
+    */
+    _toggleButtons() {
+      this.services.layout.size;
+
+      const _this = this;
+      const root = this.root.element;
+
+      //HERE
+      const button_expand = (this.root.ui.dialogs.dialogs || {}).sidebar || [];
+      _this._showAllButtons();
+
+      const buttons = this.element.selectAll(".vzb-buttonlist-btn");
+
+      const not_required = [];
+      const required = [];
+
+      let button_width = 80;
+      let button_height = 80;
+      let container_width = this.element.node().getBoundingClientRect().width;
+      let container_height = this.element.node().getBoundingClientRect().height;
+      let buttons_width = 0;
+      let buttons_height = 0;
+
+      buttons.filter(d => !d.ignoreSize).each(function(d) {
+        const button_data = d;
+        const button = d3.select(this);
+        const expandable = button_expand.indexOf(button_data.id) !== -1;
+        const button_margin = { top: parseInt(button.style("margin-top")), right: parseInt(button.style("margin-right")), left: parseInt(button.style("margin-left")), bottom: parseInt(button.style("margin-bottom")) };
+        button_width = button.node().getBoundingClientRect().width + button_margin.right + button_margin.left;
+        button_height = button.node().getBoundingClientRect().height + button_margin.top + button_margin.bottom;
+
+        if (!button.classed(class_hidden)) {
+          if (!expandable || _this.services.layout.profile !== "LARGE" || _this.ui.sidebarCollapse) {
+            buttons_width += button_width;
+            buttons_height += button_height;
+            //sort buttons between required and not required buttons.
+            // Not required buttons will only be shown if there is space available
+            if (button_data.required) {
+              required.push(button);
+            } else {
+              not_required.push(button);
+            }
+          } else {
+            button.style("display", "none");
+          }
+        }
+      });
+      const width_diff = buttons_width - container_width;
+      const height_diff = buttons_height - container_height;
+      let number_of_buttons = 1;
+
+      //check if container is landscape or portrait
+      // if portrait small or large with expand, use width
+      if (root.classed("vzb-large") && root.classed("vzb-dialog-expand-true")
+      || root.classed("vzb-small") && root.classed("vzb-portrait")) {
+        //check if the width_diff is small. If it is, add to the container
+        // width, to allow more buttons in a way that is still usable
+        if (width_diff > 0 && width_diff <= 10) {
+          container_width += width_diff;
+        }
+        number_of_buttons = Math.floor(container_width / button_width) - required.length;
+        if (number_of_buttons < 0) {
+          number_of_buttons = 0;
+        }
+      // else, use height
+      } else {
+        //check if the width_diff is small. If it is, add to the container
+        // width, to allow more buttons in a way that is still usable
+        if (height_diff > 0 && height_diff <= 10) {
+          container_height += height_diff;
+        }
+        number_of_buttons = Math.floor(container_height / button_height) - required.length;
+        if (number_of_buttons < 0) {
+          number_of_buttons = 0;
+        }
+      }
+      //change the display property of non required buttons, from right to
+      // left
+      not_required.reverse();
+      const hiddenButtons = [];
+      for (let i = 0, j = not_required.length - number_of_buttons; i < j; i++) {
+        not_required[i].style("display", "none");
+        hiddenButtons.push(not_required[i].attr("data-btn"));
+      }
+
+      // const evt = {};
+      // evt["hiddenButtons"] = hiddenButtons;
+      // _this.trigger("toggle", evt);
+      this.element.dispatch("custom-togglebuttons", 
+        { detail: { hiddenButtons } });
+
+    }
+
+    /*
+     * adds buttons configuration to the components and template_data
+     * @param {Array} button_list list of buttons to be added
+     */
+    _addButtons(button_list, button_expand) {
+      const _this = this;
+      this._components_config = [];
+      const details_btns = [];
+      if (!button_list.length) return;
+      //add a component for each button
+      for (let i = 0; i < button_list.length; i++) {
+
+        const btn = button_list[i];
+        const btn_config = this._available_buttons[btn];
+
+        //add template data
+        const d = (btn_config) ? btn : "_default";
+        const details_btn = clone(this._available_buttons[d]);
+        if (d == "_default") {
+          details_btn.title = "buttons/" + btn;
+        }
+        details_btn.id = btn;
+        details_btn.icon = iconset["ICON_" + details_btn.icon.toUpperCase()];
+        details_btns.push(details_btn);
+      }
+
+      this.element.selectAll("button").data(details_btns)
+        .enter().append("button")
+        .attr("class", d => {
+          let cls = "vzb-buttonlist-btn";
+          if (button_expand.length > 0) {
+            if (button_expand.indexOf(d.id) > -1) {
+              cls += " vzb-dialog-side-btn";
+            }
+          }
+
+          return cls;
+        })
+        .attr("data-btn", d => d.id)
+        .html(btn => `
+        <span class='vzb-buttonlist-btn-icon fa'>${btn.icon}</span>
+        <span class='vzb-buttonlist-btn-title'>
+          <span data-localise='${btn.title}'></span>
+        </span>
+      `);
+
+      const buttons = this.element.selectAll(".vzb-buttonlist-btn");
+
+      //clicking the button
+      buttons.on("click", function(event) {
+
+        event.preventDefault();
+        event.stopPropagation();
+
+        const id = d3.select(this).attr("data-btn");
+        _this.proceedClick(id);
+      });
+
+    }
+
+
+    scrollToEnd() {
+      let target = 0;
+      const parent = this.root.element;
+
+      if (parent.classed("vzb-portrait") && parent.classed("vzb-small")) {
+        if (this.model.state.marker.select.length > 0) target = this.element.node().scrollWidth;
+        this.element.node().scrollLeft = target;
+      } else {
+        if (this.model.state.marker.select.length > 0) target = this.element.node().scrollHeight;
+        this.element.node().scrollTop = target;
+      }
+    }
+
+
+    /*
+     * RESIZE:
+     * Executed whenever the container is resized
+     * Ideally, it contains only operations related to size
+     */
+    resize() {
+      //TODO: what to do when resizing?
+      if (!this.element.selectAll) return warn("buttonlist resize() aborted because element is not yet defined");
+
+      //toggle presentaion off is switch to 'small' profile
+      if (this.services.layout.profile === "SMALL" && this.services.layout.projector) {
+        this.togglePresentationMode();
+      }
+    }
+
+    setButtonActive(id, boolActive) {
+      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
+
+      btn.classed(class_active$2, boolActive);
+    }
+
+    setButtonUnavailable(id, boolUnavailable) {
+      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
+
+      btn.classed(class_unavailable, boolUnavailable);
+    }
+
+    toggleSidebarCollapse() {
+      this.ui.sidebarCollapse = !this.ui.sidebarCollapse;
+      this.setSidebarCollapse();
+      this.services.layout._resizeHandler();
+    }
+
+    setSidebarCollapse() {
+      this.root.element.classed("vzb-dialog-expand-true", !this.ui.sidebarCollapse);
+    }
+
+    toggleBubbleTrails() {
+      if (this.model.encoding) {
+        const trail = this.model.encoding.trail;
+        trail.setShow(!trail.show);
+      }
+      this.setBubbleTrails();
+    }
+    setBubbleTrails() {
+      if (!this.model.encoding) return;
+      const trail = this.model.encoding.trail;
+      if (!trail) return;
+      const id = "trails";
+      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
+      if (!btn.node()) return warn("setBubbleTrails: no button '" + id + "' found in DOM. doing nothing");
+      btn.classed(class_active_locked, trail.show);
+      const anySelected = this.model.encoding.selected.data.filter.any();
+      btn.classed(class_hidden, !anySelected);
+    }
+    toggleTimeForecast() {
+      this.root.ui.chart.showForecast = !this.root.ui.chart.showForecast;
+      this.setTimeForecast();
+    }
+    setTimeForecast() {
+      const showForecast = this.root.ui.chart.showForecast;
+      if (!showForecast && showForecast !== false) return;
+      const id = "forecast";
+      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
+      if (!btn.node()) return warn("setBubbleTrails: no button '" + id + "' found in DOM. doing nothing");
+
+      btn.classed(class_active_locked, showForecast);
+      btn.classed(class_hidden, !this.root.ui.chart.endBeforeForecast);
+    }
+    toggleBubbleLock() {
+      const active = (this.root.ui.chart || {}).lockActive;
+
+      if (!this.model.encoding.selected.data.filter.any() && !active) return;
+
+      let locked = this.root.ui.chart.lockNonSelected;
+      const time = this.model.encoding.frame.value;
+      locked = locked ? 0 : this.localise(time);
+      this.root.ui.chart.lockNonSelected = locked;
+
+      this.setBubbleLock();
+    }
+    setBubbleLock() {
+      let locked = (this.root.ui.chart || {}).lockNonSelected;
+      const active = (this.root.ui.chart || {}).lockActive;
+      const unavailable = (this.root.ui.chart || {}).lockUnavailable || false;
+      if (!locked && locked !== 0) return;
+
+      if (locked !== 0 && this.model.encoding.selected.data.filter.any() && !active) {
+        locked = this.root.ui.chart.lockNonSelected = 0;
+      }
+
+      const id = "lock";
+      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
+      if (!btn.node()) return warn("setBubbleLock: no button '" + id + "' found in DOM. doing nothing");
+
+      //btn.classed(class_unavailable, !this.model.encoding.selected.data.filter.any() && !active);
+      btn.classed(class_unavailable, unavailable);
+      if (typeof active === "undefined") {
+        btn.classed(class_hidden, !this.model.encoding.selected.data.filter.any());
+      } else {
+        btn.classed(class_hidden, !active);
+      }
+
+      btn.classed(class_active_locked, locked);
+
+      btn.select(".vzb-buttonlist-btn-icon")
+        .html(iconset[locked ? "ICON_LOCK" : "ICON_UNLOCK"]);
+
+      btn.select(".vzb-buttonlist-btn-title>span").text(
+        locked ? locked : this.localise("buttons/lock")
+      )
+        .attr("data-vzb-translate", locked ? null : "buttons/lock");
+    }
+    toggleInpercent() {
+      this.root.ui.chart.inpercent = !this.root.ui.chart.inpercent;
+      this.setInpercent();
+    }
+    setInpercent() {
+      if (typeof ((this.root.ui.chart || {}).inpercent) === "undefined") return;
+      const id = "inpercent";
+      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
+
+      btn.classed(class_active_locked, this.root.ui.chart.inpercent);
+    }
+    togglePresentationMode() {
+      this.services.layout.projector = !this.services.layout.projector;
+      this.setPresentationMode();
+    }
+    setPresentationMode() {
+      const id = "presentation";
+      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
+
+      btn.classed(class_active_locked, this.services.layout.projector);
+    }
+    toggleFullScreen(id, emulateClick) {
+
+      if (!window) return;
+
+      let component = this;
+      //let pholder = component.placeholder;
+      let pholder = component.root.element.node();
+      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
+      const fs = !this.ui.fullscreen;
+      const body_overflow = (fs) ? "hidden" : this._prev_body_overflow;
+
+
+      //TODO: figure out a way to avoid fullscreen resize delay in firefox
+      if (fs) {
+        this.resizeInExitHandler = false;
+        launchIntoFullscreen(pholder);
+        subscribeFullscreenChangeEvent.call(this, this.toggleFullScreen.bind(this, id, true));
+      } else {
+        this.resizeInExitHandler = !emulateClick;
+        exitFullscreen.call(this);
+      }
+
+      this.ui.fullscreen = fs;
+      btn.classed(class_active_locked, fs);
+
+      btn.select(".vzb-buttonlist-btn-icon").html(iconset[fs ? "ICON_UNEXPAND" : "ICON_EXPAND"]);
+
+      btn.select(".vzb-buttonlist-btn-title").text(
+        this.localise("buttons/" + (fs ? "unexpand" : "expand"))
+      )
+        .attr("data-vzb-translate", "buttons/" + (fs ? "unexpand" : "expand"));
+
+      //restore body overflow
+      document.body.style.overflow = body_overflow;
+
+      if (!this.resizeInExitHandler) this.services.layout._resizeHandler();
+    }
+
+  }
+
+  ButtonList.DEFAULT_UI = {
+    buttons: ["fullscreen"],
+    sidebarCollapse: false
+  };
+
+  function isFullscreen() {
+    if (!window) return false;
+    if (window.document.webkitIsFullScreen !== undefined)
+      return window.document.webkitIsFullScreen;
+    if (window.document.mozFullScreen !== undefined)
+      return window.document.mozFullScreen;
+    if (window.document.msFullscreenElement !== undefined)
+      return window.document.msFullscreenElement;
+
+    return false;
+  }
+
+  function exitHandler(emulateClickFunc) {
+    if (!isFullscreen()) {
+      removeFullscreenChangeEvent.call(this);
+      if (!this.resizeInExitHandler) {
+        emulateClickFunc();
+      } else {
+        this.services.layout._resizeHandler();
+      }
+    }
+  }
+
+  function subscribeFullscreenChangeEvent(exitFunc) {
+    if (!window) return;
+    const doc = window.document;
+
+    this.exitFullscreenHandler = exitHandler.bind(this, exitFunc);
+    doc.addEventListener("webkitfullscreenchange", this.exitFullscreenHandler, false);
+    doc.addEventListener("mozfullscreenchange", this.exitFullscreenHandler, false);
+    doc.addEventListener("fullscreenchange", this.exitFullscreenHandler, false);
+    doc.addEventListener("MSFullscreenChange", this.exitFullscreenHandler, false);
+  }
+
+  function removeFullscreenChangeEvent() {
+    const doc = window.document;
+
+    doc.removeEventListener("webkitfullscreenchange", this.exitFullscreenHandler);
+    doc.removeEventListener("mozfullscreenchange", this.exitFullscreenHandler);
+    doc.removeEventListener("fullscreenchange", this.exitFullscreenHandler);
+    doc.removeEventListener("MSFullscreenChange", this.exitFullscreenHandler);
+  }
+
+  function launchIntoFullscreen(elem) {
+    if (elem.requestFullscreen) {
+      elem.requestFullscreen();
+    } else if (elem.msRequestFullscreen) {
+      elem.msRequestFullscreen();
+    } else if (elem.mozRequestFullScreen) {
+      elem.mozRequestFullScreen();
+    } else if (elem.webkitRequestFullscreen && allowWebkitFullscreenAPI()) {
+      elem.webkitRequestFullscreen();
+    }
+  }
+
+  function exitFullscreen() {
+    if (document.exitFullscreen && document.fullscreenElement) {
+      document.exitFullscreen();
+    } else if (document.msExitFullscreen) {
+      document.msExitFullscreen();
+    } else if (document.mozCancelFullScreen) {
+      document.mozCancelFullScreen();
+    } else if (document.webkitExitFullscreen && allowWebkitFullscreenAPI()) {
+      document.webkitExitFullscreen();
+    } else {
+      removeFullscreenChangeEvent.call(this);
+      this.resizeInExitHandler = false;
+    }
+  }
+
+  function allowWebkitFullscreenAPI() {
+    return !(navigator.vendor && navigator.vendor.indexOf("Apple") > -1 &&
+      navigator.userAgent && !navigator.userAgent.match("CriOS"));
+  }
 
   const CIRCLE_RADIUS = 6;
 
@@ -4559,7 +5531,7 @@
       if (this._legendHasOwnModel() && !this._isLegendModelReady()) return;
 
       const individualColors = false;
-      this._updateListLegend(this.MDL.color.scale.isDiscrete() && !this.canShowMap && !individualColors);
+      this._updateListLegend(this.MDL.color.scale.isDiscrete() && !this.canShowMap && !individualColors && !this.MDL.color.scale.isPattern);
       this._updateMinimapLegend(this.MDL.color.scale.isDiscrete() && this.canShowMap);
       updateRainbowLegend.bind(this)(!this.MDL.color.scale.isDiscrete());
     }
@@ -4820,21 +5792,9 @@
     }
   }
 
-  const decorated$a = mobx.decorate(ColorLegend, {
+  const decorated$9 = mobx.decorate(ColorLegend, {
     "MDL": mobx.computed
   });
-
-  const CollectionMixin$2 = superClass => class extends superClass {
-    //static _collection = {};
-    static add(name, addedClass) {
-      CollectionMixin$2._collection[name] = addedClass;
-    }
-    static get(name) { return CollectionMixin$2._collection[name];}
-  };
-
-  CollectionMixin$2._collection = {};
-
-  class Chart extends CollectionMixin$2(BaseComponent) {}
 
   class DataNotes extends BaseComponent {
 
@@ -4985,755 +5945,6 @@
 
   }
 
-  /*!
-   * VIZABI BUTTONLIST
-   * Reusable buttonlist component
-   */
-
-  //default existing buttons
-  const class_active$2 = "vzb-active";
-  const class_hidden = "vzb-hidden";
-  const class_active_locked = "vzb-active-locked";
-  const class_unavailable = "vzb-unavailable";
-
-  class ButtonList extends BaseComponent {
-
-    constructor(config) {
-
-      super(config);
-    } 
-
-    setup() {
-
-      this._available_buttons = {
-        "find": {
-          title: "buttons/find",
-          icon: "search",
-          required: false
-        },
-        "show": {
-          title: "buttons/show",
-          icon: "asterisk",
-          required: false
-        },
-        "moreoptions": {
-          title: "buttons/more_options",
-          icon: "gear",
-          required: true
-        },
-        "colors": {
-          title: "buttons/colors",
-          icon: "paintbrush",
-          required: false
-        },
-        "mapcolors": {
-          title: "buttons/mapcolors",
-          icon: "paintbrush",
-          required: false
-        },
-        "size": {
-          title: "buttons/size",
-          icon: "circle",
-          required: false
-        },
-        "zoom": {
-          title: "buttons/zoom",
-          icon: "cursorPlus",
-          required: false
-        },
-        "fullscreen": {
-          title: "buttons/expand",
-          icon: "expand",
-          func: this.toggleFullScreen.bind(this),
-          required: true
-        },
-        "trails": {
-          title: "buttons/trails",
-          icon: "trails",
-          func: this.toggleBubbleTrails.bind(this),
-          required: false,
-          statebind: "MDL.trail.show",
-          statebindfunc: this.setBubbleTrails.bind(this)
-        },
-        "forecast": {
-          title: "buttons/forecast",
-          icon: "forecast",
-          func: this.toggleTimeForecast.bind(this),
-          required: false,
-          statebind: "MDL.frame.showForecast",
-          statebindfunc: this.setTimeForecast.bind(this)
-        },
-        "lock": {
-          title: "buttons/lock",
-          icon: "lock",
-          func: this.toggleBubbleLock.bind(this),
-          required: false,
-          statebind: "root.ui.chart.lockNonSelected",
-          statebindfunc: this.setBubbleLock.bind(this)
-        },
-        "inpercent": {
-          title: "buttons/inpercent",
-          icon: "percent",
-          func: this.toggleInpercent.bind(this),
-          required: false,
-          statebind: "root.ui.chart.inpercent",
-          statebindfunc: this.setInpercent.bind(this)
-        },
-        "presentation": {
-          title: "buttons/presentation",
-          icon: "presentation",
-          func: this.togglePresentationMode.bind(this),
-          required: false,
-          statebind: "root.ui.presentation",
-          statebindfunc: this.setPresentationMode.bind(this)
-        },
-        "sidebarcollapse": {
-          title: "buttons/sidebar_collapse",
-          icon: "angleDoubleLeft",
-          func: this.toggleSidebarCollapse.bind(this),
-          required: true,
-          statebind: "root.ui.sidebarCollapse",
-          statebindfunc: this.setSidebarCollapse.bind(this),
-          ignoreSize: true
-        },
-        "about": {
-          title: "buttons/about",
-          icon: "about",
-          required: false
-        },
-        "repeat": {
-          title: "buttons/repeat",
-          icon: "repeat",
-          required: false
-        },
-        "axes": {
-          title: "buttons/axes",
-          icon: "axes",
-          required: false
-        },
-        "axesmc": {
-          title: "buttons/axesmc",
-          icon: "axes",
-          required: false
-        },
-        "stack": {
-          title: "buttons/stack",
-          icon: "stack",
-          required: false
-        },
-        "side": {
-          title: "buttons/side",
-          icon: "side",
-          required: false
-        },
-        "_default": {
-          title: "Button",
-          icon: "asterisk",
-          required: false
-        }
-      };
-
-      this._active_comp = false;
-
-      // this.model_binds = {
-      //   "change:state.marker.select": function(evt, path) {
-      //     if (!_this._readyOnce) return;
-      //     if (path.indexOf("select.labelOffset") !== -1) return;
-
-      //     _this.setBubbleTrails();
-      //     _this.setBubbleLock();
-      //     _this._toggleButtons();
-
-
-      //     //scroll button list to end if bottons appeared or disappeared
-      //     // if(_this.entitiesSelected_1 !== (_this.model.state.marker.select.length > 0)) {
-      //     //   _this.scrollToEnd();
-      //     // }
-      //     // _this.entitiesSelected_1 = _this.model.state.marker.select.length > 0;
-      //   },
-      //   "change:ui.chart": function(evt, path) {
-      //     if (!_this._readyOnce) return;
-
-      //     if (path.indexOf("lockActive") > -1 || path.indexOf("lockUnavailable") > -1) {
-      //       _this.setBubbleLock();
-      //     }
-      //   }
-      // };
-
-      // config.ui is same as this.model.ui here but this.model.ui is not yet available because constructor hasn't been called.
-      // can't call constructor earlier because this.model_binds needs to be complete before calling constructor
-      // builds model
-      //this._super(config, context);
-
-      this.validatePopupButtons(this.root.ui.buttons.buttons, this.root.ui.dialogs.dialogs);
-
-      this.element.selectAll("div").remove();
-
-      // // // // this.root.findChildByName("gapminder-dialogs").on("close", (evt, params) => {
-      // // // //   _this.setButtonActive(params.id, false);
-      // // // // });
-
-
-      // // if button_expand has been passed in with boolean param or array must check and covert to array
-      // if (button_expand){
-      //   this.model.ui.dialogs.sidebar = (button_expand === true) ? this.model.ui.buttons : button_expand;
-      // }
-
-      // if (button_expand && button_expand.length !== 0) {
-      //     d3.select(this.root.element).classed("vzb-dialog-expand-true", true);
-      // }
-
-
-      // (button_expand||[]).forEach(function(button) {
-      //   if (button_list.indexOf(button) === -1) {
-      //     button_list.push(button);
-      //   }
-      // });
-
-      //this.model.ui.buttons = button_list;
-
-      //add buttons and render components
-
-      //store body overflow
-      this._prev_body_overflow = document.body.style.overflow;
-
-      //TODO: maybe do the initial state setting here for all buttons
-      if(this.root.ui.buttons.buttons.includes("sidebarcollapse")) this.setSidebarCollapse();
-
-      // this.setBubbleTrails();
-      // this.setTimeForecast();
-      // this.setBubbleLock();
-      // this.setInpercent();
-      // this.setPresentationMode();
-    }
-
-    draw() {
-      this.MDL = {
-        frame: this.model.encoding.frame
-      };
-      this.localise = this.services.locale.auto();
-
-      this._dialogs = this.root.findChild({type: "Dialogs"});
-      if(!this._dialogs) console.warn("Buttonlist was unable to find a subcomponent of type 'Dialogs' in root component. Could be that index.js of a tool is lacking a configuration.");
-
-      const button_expand = (this.root.ui.dialogs.dialogs || {}).sidebar || [];
-      const button_list = [].concat(this.root.ui.buttons.buttons);
-      this._addButtons(button_list, button_expand);
-      this.addReaction(this._localiseButtons);
-      this.addReaction(this._toggleButtons);
-
-      this.root.ui.buttons.buttons.forEach(buttonId => {
-        const button = this._available_buttons[buttonId];
-        if (button) {
-          if (button.statebind) {
-            this.addReaction(() => {
-              //_this.model_binds["change:" + button.statebind] = function(evt) {
-              //if (!_this._readyOnce) return;
-              button.statebindfunc(buttonId, getProp(this, button.statebind.split(".")));
-            });
-          } else {
-            this.addReaction(() => {
-              const dialog = this._dialogs.findChild({ name: buttonId});
-              if (!dialog) return;
-              const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + buttonId + "']");
-              btn.classed(class_active$2, dialog.getOpen());
-            });
-          }
-        }
-      });
-
-    }
-
-    proceedClick(id) {
-      const _this = this;
-      const btn_config = _this._available_buttons[id];
-
-      if (btn_config && btn_config.func) {
-        btn_config.func(id);
-      } else {
-        this._dialogs.toggleDialogOpen(id);
-      }
-    }
-
-    validatePopupButtons(buttons, dialogs) {
-      const _this = this;
-
-      const popupDialogs = dialogs.popup;
-      const popupButtons = buttons.filter(d => (_this._available_buttons[d] && !_this._available_buttons[d].func));
-      for (let i = 0, j = popupButtons.length; i < j; i++) {
-        if (popupDialogs.indexOf(popupButtons[i]) == -1) {
-          return error('Buttonlist: bad buttons config: "' + popupButtons[i] + '" is missing in popups list');
-        }
-      }
-      return false; //all good
-    }
-
-    /*
-     * reset buttons show state
-     */
-    _showAllButtons() {
-      // show all existing buttons
-      const buttons = this.element.selectAll(".vzb-buttonlist-btn");
-      buttons.each(function() {
-        const button = d3.select(this);
-        button.style("display", "");
-      });
-    }
-
-    _localiseButtons() {
-      const _this = this;
-      this.services.locale.id;
-      this.element.selectAll("span[data-localise]").each(function() {
-        const view = d3.select(this);
-        view.text(_this.localise(view.attr("data-localise")));
-      });
-    }
-
-    /*
-    * determine which buttons are shown on the buttonlist
-    */
-    _toggleButtons() {
-      this.services.layout.size;
-
-      const _this = this;
-      const root = this.root.element;
-
-      //HERE
-      const button_expand = (this.root.ui.dialogs.dialogs || {}).sidebar || [];
-      _this._showAllButtons();
-
-      const buttons = this.element.selectAll(".vzb-buttonlist-btn");
-
-      const not_required = [];
-      const required = [];
-
-      let button_width = 80;
-      let button_height = 80;
-      let container_width = this.element.node().getBoundingClientRect().width;
-      let container_height = this.element.node().getBoundingClientRect().height;
-      let buttons_width = 0;
-      let buttons_height = 0;
-
-      buttons.filter(d => !d.ignoreSize).each(function(d) {
-        const button_data = d;
-        const button = d3.select(this);
-        const expandable = button_expand.indexOf(button_data.id) !== -1;
-        const button_margin = { top: parseInt(button.style("margin-top")), right: parseInt(button.style("margin-right")), left: parseInt(button.style("margin-left")), bottom: parseInt(button.style("margin-bottom")) };
-        button_width = button.node().getBoundingClientRect().width + button_margin.right + button_margin.left;
-        button_height = button.node().getBoundingClientRect().height + button_margin.top + button_margin.bottom;
-
-        if (!button.classed(class_hidden)) {
-          if (!expandable || _this.services.layout.profile !== "LARGE" || _this.ui.sidebarCollapse) {
-            buttons_width += button_width;
-            buttons_height += button_height;
-            //sort buttons between required and not required buttons.
-            // Not required buttons will only be shown if there is space available
-            if (button_data.required) {
-              required.push(button);
-            } else {
-              not_required.push(button);
-            }
-          } else {
-            button.style("display", "none");
-          }
-        }
-      });
-      const width_diff = buttons_width - container_width;
-      const height_diff = buttons_height - container_height;
-      let number_of_buttons = 1;
-
-      //check if container is landscape or portrait
-      // if portrait small or large with expand, use width
-      if (root.classed("vzb-large") && root.classed("vzb-dialog-expand-true")
-      || root.classed("vzb-small") && root.classed("vzb-portrait")) {
-        //check if the width_diff is small. If it is, add to the container
-        // width, to allow more buttons in a way that is still usable
-        if (width_diff > 0 && width_diff <= 10) {
-          container_width += width_diff;
-        }
-        number_of_buttons = Math.floor(container_width / button_width) - required.length;
-        if (number_of_buttons < 0) {
-          number_of_buttons = 0;
-        }
-      // else, use height
-      } else {
-        //check if the width_diff is small. If it is, add to the container
-        // width, to allow more buttons in a way that is still usable
-        if (height_diff > 0 && height_diff <= 10) {
-          container_height += height_diff;
-        }
-        number_of_buttons = Math.floor(container_height / button_height) - required.length;
-        if (number_of_buttons < 0) {
-          number_of_buttons = 0;
-        }
-      }
-      //change the display property of non required buttons, from right to
-      // left
-      not_required.reverse();
-      const hiddenButtons = [];
-      for (let i = 0, j = not_required.length - number_of_buttons; i < j; i++) {
-        not_required[i].style("display", "none");
-        hiddenButtons.push(not_required[i].attr("data-btn"));
-      }
-
-      // const evt = {};
-      // evt["hiddenButtons"] = hiddenButtons;
-      // _this.trigger("toggle", evt);
-      this.element.dispatch("custom-togglebuttons", 
-        { detail: { hiddenButtons } });
-
-    }
-
-    /*
-     * adds buttons configuration to the components and template_data
-     * @param {Array} button_list list of buttons to be added
-     */
-    _addButtons(button_list, button_expand) {
-      const _this = this;
-      this._components_config = [];
-      const details_btns = [];
-      if (!button_list.length) return;
-      //add a component for each button
-      for (let i = 0; i < button_list.length; i++) {
-
-        const btn = button_list[i];
-        const btn_config = this._available_buttons[btn];
-
-        //add template data
-        const d = (btn_config) ? btn : "_default";
-        const details_btn = clone(this._available_buttons[d]);
-        if (d == "_default") {
-          details_btn.title = "buttons/" + btn;
-        }
-        details_btn.id = btn;
-        details_btn.icon = iconset["ICON_" + details_btn.icon.toUpperCase()];
-        details_btns.push(details_btn);
-      }
-
-      this.element.selectAll("button").data(details_btns)
-        .enter().append("button")
-        .attr("class", d => {
-          let cls = "vzb-buttonlist-btn";
-          if (button_expand.length > 0) {
-            if (button_expand.indexOf(d.id) > -1) {
-              cls += " vzb-dialog-side-btn";
-            }
-          }
-
-          return cls;
-        })
-        .attr("data-btn", d => d.id)
-        .html(btn => `
-        <span class='vzb-buttonlist-btn-icon fa'>${btn.icon}</span>
-        <span class='vzb-buttonlist-btn-title'>
-          <span data-localise='${btn.title}'></span>
-        </span>
-      `);
-
-      const buttons = this.element.selectAll(".vzb-buttonlist-btn");
-
-      //clicking the button
-      buttons.on("click", function(event) {
-
-        event.preventDefault();
-        event.stopPropagation();
-
-        const id = d3.select(this).attr("data-btn");
-        _this.proceedClick(id);
-      });
-
-    }
-
-
-    scrollToEnd() {
-      let target = 0;
-      const parent = d3.select(".vzb-tool");
-
-      if (parent.classed("vzb-portrait") && parent.classed("vzb-small")) {
-        if (this.model.state.marker.select.length > 0) target = this.element.node().scrollWidth;
-        this.element.node().scrollLeft = target;
-      } else {
-        if (this.model.state.marker.select.length > 0) target = this.element.node().scrollHeight;
-        this.element.node().scrollTop = target;
-      }
-    }
-
-
-    /*
-     * RESIZE:
-     * Executed whenever the container is resized
-     * Ideally, it contains only operations related to size
-     */
-    resize() {
-      //TODO: what to do when resizing?
-      if (!this.element.selectAll) return warn("buttonlist resize() aborted because element is not yet defined");
-
-      //toggle presentaion off is switch to 'small' profile
-      if (this.services.layout.profile === "SMALL" && this.services.layout.projector) {
-        this.togglePresentationMode();
-      }
-    }
-
-    setButtonActive(id, boolActive) {
-      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
-
-      btn.classed(class_active$2, boolActive);
-    }
-
-    toggleSidebarCollapse() {
-      this.ui.sidebarCollapse = !this.ui.sidebarCollapse;
-      this.setSidebarCollapse();
-      this.services.layout._resizeHandler();
-    }
-
-    setSidebarCollapse() {
-      this.root.element.classed("vzb-dialog-expand-true", !this.ui.sidebarCollapse);
-    }
-
-    toggleBubbleTrails() {
-      if (this.model.encoding) {
-        const trail = this.model.encoding.trail;
-        trail.setShow(!trail.show);
-      }
-      this.setBubbleTrails();
-    }
-    setBubbleTrails() {
-      if (!this.model.encoding) return;
-      const trail = this.model.encoding.trail;
-      if (!trail) return;
-      const id = "trails";
-      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
-      if (!btn.node()) return warn("setBubbleTrails: no button '" + id + "' found in DOM. doing nothing");
-      btn.classed(class_active_locked, trail.show);
-      const anySelected = this.model.encoding.selected.data.filter.any();
-      btn.classed(class_hidden, !anySelected);
-    }
-    toggleTimeForecast() {
-      this.root.ui.chart.showForecast = !this.root.ui.chart.showForecast;
-      this.setTimeForecast();
-    }
-    setTimeForecast() {
-      const showForecast = this.root.ui.chart.showForecast;
-      if (!showForecast && showForecast !== false) return;
-      const id = "forecast";
-      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
-      if (!btn.node()) return warn("setBubbleTrails: no button '" + id + "' found in DOM. doing nothing");
-
-      btn.classed(class_active_locked, showForecast);
-      btn.classed(class_hidden, !this.root.ui.chart.endBeforeForecast);
-    }
-    toggleBubbleLock() {
-      const active = (this.root.ui.chart || {}).lockActive;
-
-      if (!this.model.encoding.selected.data.filter.any() && !active) return;
-
-      let locked = this.root.ui.chart.lockNonSelected;
-      const time = this.model.encoding.frame.value;
-      locked = locked ? 0 : this.localise(time);
-      this.root.ui.chart.lockNonSelected = locked;
-
-      this.setBubbleLock();
-    }
-    setBubbleLock() {
-      let locked = (this.root.ui.chart || {}).lockNonSelected;
-      const active = (this.root.ui.chart || {}).lockActive;
-      const unavailable = (this.root.ui.chart || {}).lockUnavailable || false;
-      if (!locked && locked !== 0) return;
-
-      if (locked !== 0 && this.model.encoding.selected.data.filter.any() && !active) {
-        locked = this.root.ui.chart.lockNonSelected = 0;
-      }
-
-      const id = "lock";
-      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
-      if (!btn.node()) return warn("setBubbleLock: no button '" + id + "' found in DOM. doing nothing");
-
-      //btn.classed(class_unavailable, !this.model.encoding.selected.data.filter.any() && !active);
-      btn.classed(class_unavailable, unavailable);
-      if (typeof active === "undefined") {
-        btn.classed(class_hidden, !this.model.encoding.selected.data.filter.any());
-      } else {
-        btn.classed(class_hidden, !active);
-      }
-
-      btn.classed(class_active_locked, locked);
-
-      btn.select(".vzb-buttonlist-btn-icon")
-        .html(iconset[locked ? "ICON_LOCK" : "ICON_UNLOCK"]);
-
-      btn.select(".vzb-buttonlist-btn-title>span").text(
-        locked ? locked : this.localise("buttons/lock")
-      )
-        .attr("data-vzb-translate", locked ? null : "buttons/lock");
-    }
-    toggleInpercent() {
-      this.root.ui.chart.inpercent = !this.root.ui.chart.inpercent;
-      this.setInpercent();
-    }
-    setInpercent() {
-      if (typeof ((this.root.ui.chart || {}).inpercent) === "undefined") return;
-      const id = "inpercent";
-      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
-
-      btn.classed(class_active_locked, this.root.ui.chart.inpercent);
-    }
-    togglePresentationMode() {
-      this.services.layout.projector = !this.services.layout.projector;
-      this.setPresentationMode();
-    }
-    setPresentationMode() {
-      const id = "presentation";
-      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
-
-      btn.classed(class_active_locked, this.services.layout.projector);
-    }
-    toggleFullScreen(id, emulateClick) {
-
-      if (!window) return;
-
-      let component = this;
-      //let pholder = component.placeholder;
-      let pholder = component.root.element.node();
-      const btn = this.element.selectAll(".vzb-buttonlist-btn[data-btn='" + id + "']");
-      const fs = !this.ui.fullscreen;
-      const body_overflow = (fs) ? "hidden" : this._prev_body_overflow;
-
-
-      //TODO: figure out a way to avoid fullscreen resize delay in firefox
-      if (fs) {
-        this.resizeInExitHandler = false;
-        launchIntoFullscreen(pholder);
-        subscribeFullscreenChangeEvent.call(this, this.toggleFullScreen.bind(this, id, true));
-      } else {
-        this.resizeInExitHandler = !emulateClick;
-        exitFullscreen.call(this);
-      }
-
-      this.ui.fullscreen = fs;
-      btn.classed(class_active_locked, fs);
-
-      btn.select(".vzb-buttonlist-btn-icon").html(iconset[fs ? "ICON_UNEXPAND" : "ICON_EXPAND"]);
-
-      btn.select(".vzb-buttonlist-btn-title").text(
-        this.localise("buttons/" + (fs ? "unexpand" : "expand"))
-      )
-        .attr("data-vzb-translate", "buttons/" + (fs ? "unexpand" : "expand"));
-
-      //restore body overflow
-      document.body.style.overflow = body_overflow;
-
-      if (!this.resizeInExitHandler) this.services.layout._resizeHandler();
-    }
-
-  }
-
-  ButtonList.DEFAULT_UI = {
-    buttons: ["fullscreen"],
-    sidebarCollapse: false
-  };
-
-  function isFullscreen() {
-    if (!window) return false;
-    if (window.document.webkitIsFullScreen !== undefined)
-      return window.document.webkitIsFullScreen;
-    if (window.document.mozFullScreen !== undefined)
-      return window.document.mozFullScreen;
-    if (window.document.msFullscreenElement !== undefined)
-      return window.document.msFullscreenElement;
-
-    return false;
-  }
-
-  function exitHandler(emulateClickFunc) {
-    if (!isFullscreen()) {
-      removeFullscreenChangeEvent.call(this);
-      if (!this.resizeInExitHandler) {
-        emulateClickFunc();
-      } else {
-        this.services.layout._resizeHandler();
-      }
-    }
-  }
-
-  function subscribeFullscreenChangeEvent(exitFunc) {
-    if (!window) return;
-    const doc = window.document;
-
-    this.exitFullscreenHandler = exitHandler.bind(this, exitFunc);
-    doc.addEventListener("webkitfullscreenchange", this.exitFullscreenHandler, false);
-    doc.addEventListener("mozfullscreenchange", this.exitFullscreenHandler, false);
-    doc.addEventListener("fullscreenchange", this.exitFullscreenHandler, false);
-    doc.addEventListener("MSFullscreenChange", this.exitFullscreenHandler, false);
-  }
-
-  function removeFullscreenChangeEvent() {
-    const doc = window.document;
-
-    doc.removeEventListener("webkitfullscreenchange", this.exitFullscreenHandler);
-    doc.removeEventListener("mozfullscreenchange", this.exitFullscreenHandler);
-    doc.removeEventListener("fullscreenchange", this.exitFullscreenHandler);
-    doc.removeEventListener("MSFullscreenChange", this.exitFullscreenHandler);
-  }
-
-  function launchIntoFullscreen(elem) {
-    if (elem.requestFullscreen) {
-      elem.requestFullscreen();
-    } else if (elem.msRequestFullscreen) {
-      elem.msRequestFullscreen();
-    } else if (elem.mozRequestFullScreen) {
-      elem.mozRequestFullScreen();
-    } else if (elem.webkitRequestFullscreen && allowWebkitFullscreenAPI()) {
-      elem.webkitRequestFullscreen();
-    }
-  }
-
-  function exitFullscreen() {
-    if (document.exitFullscreen && document.fullscreenElement) {
-      document.exitFullscreen();
-    } else if (document.msExitFullscreen) {
-      document.msExitFullscreen();
-    } else if (document.mozCancelFullScreen) {
-      document.mozCancelFullScreen();
-    } else if (document.webkitExitFullscreen && allowWebkitFullscreenAPI()) {
-      document.webkitExitFullscreen();
-    } else {
-      removeFullscreenChangeEvent.call(this);
-      this.resizeInExitHandler = false;
-    }
-  }
-
-  function allowWebkitFullscreenAPI() {
-    return !(navigator.vendor && navigator.vendor.indexOf("Apple") > -1 &&
-      navigator.userAgent && !navigator.userAgent.match("CriOS"));
-  }
-
-  const CollectionMixin$1 = superClass => class extends superClass {
-    //static _collection = {};
-    static add(name, addedClass) {
-      this._collection[name] = addedClass;
-    }
-    static get(name) { return CollectionMixin$1._collection[name];}
-  };
-
-  CollectionMixin$1._collection = {};
-
-  class Button extends CollectionMixin$1(BaseComponent) {
-    constructor (config) {
-      super(config);
-
-      const {title, icon, func, required, statebind, statebindfunc, ignoreSize} = config;
-      this.title = title;
-      this.icon = icon;
-      this.func = func;
-      this.required = required;
-      this.statebind = statebind;
-      this.statebindfunc = statebindfunc;
-      this.ignoreSize = ignoreSize;
-    }
-  }
-
-  Button.BaseClass = Button;
-
   let hidden$2 = true;
   const HIDE_WHEN_SMALLER_THAN = 100; //px
   class _DataWarning extends BaseComponent {
@@ -5758,7 +5969,7 @@
         close: this.element.select(".vzb-data-warning-close"),
         title: this.element.select(".vzb-data-warning-title"),
         body: this.element.select(".vzb-data-warning-body"),
-        button: d3.select(this.options.button)
+        button: this.root.element.select(this.options.button)
       };
       
       this.element.classed("vzb-hidden", true);
@@ -5949,9 +6160,11 @@
 
     setup(conditions) {
       this.DOM = {
-        textEl: this.element.append("text").style("font-size", "20px"),
-        sampleTextEl: this.element.append("text").style("font-size", "20px").style("opacity", 0)
+        svg: this.element.append("svg"),
       };
+      this.DOM.group = this.DOM.svg.append("g");
+      this.DOM.textEl = this.DOM.group.append("text").style("font-size", "20px");
+      this.DOM.sampleTextEl = this.DOM.group.append("text").style("font-size", "20px").style("opacity", 0);
       
       this.element.classed("vzb-datetime-background", true);
 
@@ -5968,36 +6181,44 @@
       this.xAlign = "center";
       this.yAlign = "center";
 
-      if (conditions) {
-        this.setConditions(conditions);
-      }
+      if (conditions) this.setConditions(conditions);
+    }
+
+    updateLayoutProfile(){
+      this.services.layout.size; //watch
+
+      //this.profileConstants = this.services.layout.getProfileConstants(PROFILE_CONSTANTS, PROFILE_CONSTANTS_FOR_PROJECTOR, this.state.positionInFacet);
+      this.height = this.element.node().clientHeight || 0;
+      this.width = this.element.node().clientWidth || 0;
+
+      if (!this.height || !this.width) return warn("Chart _updateProfile() abort: container is too little or has display:none");
     }
 
     setConditions(conditions) {
-      if (!isNaN(parseFloat(conditions.rightOffset)) && isFinite(conditions.rightOffset)) {
+      if (!isNaN(parseFloat(conditions.rightOffset)) && isFinite(conditions.rightOffset))
         this.rightOffset = conditions.rightOffset;
-      }
-      if (!isNaN(parseFloat(conditions.leftOffset)) && isFinite(conditions.leftOffset)) {
+      
+      if (!isNaN(parseFloat(conditions.leftOffset)) && isFinite(conditions.leftOffset))
         this.leftOffset = conditions.leftOffset;
-      }
-      if (!isNaN(parseFloat(conditions.topOffset)) && isFinite(conditions.topOffset)) {
+      
+      if (!isNaN(parseFloat(conditions.topOffset)) && isFinite(conditions.topOffset))
         this.topOffset = conditions.topOffset;
-      }
-      if (!isNaN(parseFloat(conditions.bottomOffset)) && isFinite(conditions.bottomOffset)) {
+      
+      if (!isNaN(parseFloat(conditions.bottomOffset)) && isFinite(conditions.bottomOffset))
         this.bottomOffset = conditions.bottomOffset;
-      }
-      if (conditions.xAlign) {
+      
+      if (conditions.xAlign)
         this.xAlign = conditions.xAlign;
-      }
-      if (conditions.yAlign) {
+      
+      if (conditions.yAlign)
         this.yAlign = conditions.yAlign;
-      }
-      if (!isNaN(parseFloat(conditions.widthRatio)) && conditions.widthRatio > 0 && conditions.widthRatio <= 1) {
+      
+      if (!isNaN(parseFloat(conditions.widthRatio)) && conditions.widthRatio > 0 && conditions.widthRatio <= 1)
         this.widthRatio = conditions.widthRatio;
-      }
-      if (!isNaN(parseFloat(conditions.heightRatio)) && conditions.heightRatio > 0 && conditions.heightRatio <= 1) {
+      
+      if (!isNaN(parseFloat(conditions.heightRatio)) && conditions.heightRatio > 0 && conditions.heightRatio <= 1)
         this.heightRatio = conditions.heightRatio;
-      }
+      
       return this;
     }
 
@@ -6007,8 +6228,30 @@
       };
     }
 
+    get duration(){
+      //smooth animation is needed when playing, except for the case when time jumps from end to start
+      if(!this.MDL.frame || !this.MDL.frame.playing) return 0;
+      this.frameValue_1 = this.frameValue;
+      this.frameValue = this.MDL.frame.value;
+      return this.frameValue > this.frameValue_1 ? this.MDL.frame.speed : 0;
+    }
+
     draw() {
       this.localise = this.services.locale.auto(this.MDL.frame.interval);
+
+      if (this.updateLayoutProfile()) return; //return if exists with error
+
+      this.addReaction(this.updateText);
+      this.addReaction(this.updateSize);
+    }
+
+    updateText() {
+      this.setText(this.MDL.frame.value, this.duration);    
+    }
+
+    updateSize() {
+      this.services.layout.size; //watch
+      this._resizeText();
     }
 
     resizeText(width, height, topOffset, leftOffset) {
@@ -6091,7 +6334,7 @@
       case "top": textEl.attr("dy", "0"); break;
       }
 
-      this.element.attr("transform", "translate(" + this._getLeftOffset() + "," + this._getTopOffset() + ")");
+      this.DOM.group.attr("transform", "translate(" + this._getLeftOffset() + "," + this._getTopOffset() + ")");
 
       return this;
     }
@@ -6120,8 +6363,9 @@
 
   }
 
-  const decorated$9 = mobx.decorate(DateTimeBackground, {
-    "MDL": mobx.computed
+  const decorated$8 = mobx.decorate(DateTimeBackground, {
+    "MDL": mobx.computed,
+    "duration": mobx.computed
   });
 
   /*!
@@ -6423,7 +6667,7 @@
     pinned: false
   };
 
-  const decorated$8 = mobx.decorate(Dialog, {
+  const decorated$7 = mobx.decorate(Dialog, {
     "MDL": mobx.computed
   });
 
@@ -6441,7 +6685,7 @@
           posX = evt.sourceEvent.clientX;
           posY = evt.sourceEvent.clientY;
         } else {
-          const touchCoord = d3.pointer(container.node());
+          const touchCoord = d3.pointer(evt, container.node());
           posX = touchCoord[0][0];
           posY = touchCoord[0][1];
         }
@@ -6464,7 +6708,7 @@
           posX = evt.sourceEvent.clientX;
           posY = evt.sourceEvent.clientY;
         } else {
-          const touchCoord = d3.pointer(container.node());
+          const touchCoord = d3.pointer(evt, container.node());
           posX = touchCoord[0][0];
           posY = touchCoord[0][1];
         }
@@ -6498,7 +6742,7 @@
 
       dialogList.forEach(dlg => {      
         subcomponents.push({
-          type: decorated$8.get(dlg),
+          type: decorated$7.get(dlg),
           placeholder: '.vzb-dialogs-dialog[data-dlg="' + dlg + '"]',
           model: config.model,
           name: dlg,
@@ -6742,6 +6986,248 @@
     "MDL": mobx.computed
   });
 
+  function getFacetId(d) {
+    return d;
+  }
+
+  function firstLastOrMiddle$1(index, total) {
+    return { first: index === 0, last: index + 1 === total };
+  }
+  class _Facet extends BaseComponent {
+
+    get MDL() {
+      return {
+        facet_row: this.model.encoding.facet_row,
+        facet_column: this.model.encoding.facet_column,
+        maxheight: this.model.encoding.maxheight
+      };
+    }
+
+
+    loading() {
+      //this.addReaction(this.addRemoveSubcomponents, true);
+    }
+
+    draw() {
+
+      if (this.updateLayoutProfile()) return; //return if exists with error
+      this.addReaction(this.addRemoveSubcomponents);
+      this.addReaction(this.updatePositionInRepeat);
+      this.addReaction(this.updateSize);
+    }
+
+    updatePositionInRepeat() {
+      this.children.forEach(child => child.state.positionInRepeat = this.state.positionInRepeat);
+    }
+
+    getDataForSubcomponent(id) {
+      return [...this.data.get(id).values()];
+    }
+
+    sortFacets(map){
+      return new Map([...map].sort((a, b) => {
+        if (a[0].includes("is--")) return -1;
+        if (b[0].includes("is--")) return 1;
+      })) 
+    }
+
+    get data() {
+      return this.sortFacets(this.model.dataMap.order("facet_row").groupByWithMultiGroupMembership("facet_row"));
+    }
+
+    howManyFacets() {
+      return this.data.size;
+    }
+
+    get maxValues() {
+      return [...this.data.keys()].map(key => {
+        const sum = d3.sum([...this.data.get(key).values()].map(m=>m.maxheight));
+        const limit = this.MDL.maxheight.config.limit;
+        return {k: key, v: sum > limit ? limit : sum};
+      })
+    }
+
+    getScaleDomainForSubcomponent(id) {
+      if (id) {
+        return this.maxValues.find(m => m.k === id).v;
+      } else {
+        return d3.sum(this.maxValues.map(m => m.v));
+      }
+    }
+
+    updateLayoutProfile() {
+      this.services.layout.size; //watch
+
+      this.profileConstants = this.services.layout.getProfileConstants(
+        this.options.facetedComponent.PROFILE_CONSTANTS , 
+        this.options.facetedComponent.PROFILE_CONSTANTS_FOR_PROJECTOR
+      );
+      this.height = this.element.node().clientHeight || 0;
+      this.width = this.element.node().clientWidth || 0;
+
+      if (!this.height || !this.width) return warn("Chart _updateProfile() abort: container is too little or has display:none");
+    }
+
+    propagateInteractivity(callback){
+      this.children.forEach(chart => callback(chart));
+    }
+
+    get largetstFacetId(){
+      if(this.ui.inpercent){
+        return this.maxValues.at(-1).k;
+      } else {
+        const largest = {k: null, v: 0};
+        this.maxValues.forEach(({k,v}) => {if(v > largest.v) {largest.v = v; largest.k = k;}});
+        return largest.k;
+      }
+    }
+
+    updateSize() {
+      this.services.layout.size; //watch
+      this.services.layout.projector; //watch
+      this.ui.inpercent;
+
+      const minPx = this.profileConstants.minHeight;
+      const totalPx = this.height - this.profileConstants.margin.top - this.profileConstants.margin.bottom;
+      const facetKeys = [...this.data.keys()];
+
+      const getUpdateString = () => JSON.stringify(facetKeys) + minPx + totalPx + this.ui.inpercent;
+      if(getUpdateString() === this.resizeUpdateString) return;
+      this.resizeUpdateString = getUpdateString();
+
+      let rangeParts = this.maxValues.map(m => null);
+      let domainParts = this.maxValues.map(m => m.v);
+
+      if (this.ui.inpercent){
+        this.scaleRange = totalPx / domainParts.length < minPx ? minPx : totalPx / domainParts.length;
+        rangeParts = rangeParts.map(m => this.scaleRange);
+      } else {
+        let maxIter = 5;
+        let unallocatedDomain, unallocatedRange, residual = totalPx, allChartsSmall = false;
+        const proportion = i => unallocatedRange * domainParts[i] / unallocatedDomain;   
+
+        for(let iterate = 0; iterate < maxIter && residual > 1 && !allChartsSmall; iterate++){
+          unallocatedRange = totalPx - d3.sum(rangeParts.filter(f => f == minPx));
+          unallocatedDomain = d3.sum(domainParts.filter((f, i) => rangeParts[i] != minPx)); 
+          rangeParts = rangeParts.map((r, i) => (r == minPx || proportion(i) < minPx) ? minPx : Math.floor(proportion(i)));
+          allChartsSmall = rangeParts.every(e => e == minPx);
+          residual = d3.sum(rangeParts) - totalPx;
+        }
+        
+        const wastedHelperScale = d3.scaleLinear().domain([0, d3.max(domainParts)]).range([0, d3.max(rangeParts)]);
+        const wastedRange = d3.sum(rangeParts.map((r, i) => r - wastedHelperScale(domainParts[i])));  
+        this.scaleRange = totalPx - wastedRange;
+      }
+
+      const templateString = rangeParts.map(m => m + "px").join(" ");
+      this.element
+        .style("grid-template-rows", `${this.profileConstants.margin.top}px ${templateString} ${this.profileConstants.margin.bottom}px`)
+        .style("grid-template-columns", "1fr ".repeat(1));
+    }
+
+    addRemoveSubcomponents() {
+      const { facetedComponentCssClass } = this.options;
+
+      const facetKeys = [...this.data.keys()];
+
+      if(JSON.stringify(facetKeys) === this.facetKeysString) return;
+      this.facetKeysString = JSON.stringify(facetKeys);
+
+      mobx.runInAction(() => {
+        let sections = this.element.selectAll(".vzb-facet-inner")
+          .data(facetKeys, getFacetId);
+
+        sections.exit()
+          .each(d => this.removeSubcomponent(d))
+          .remove();
+
+        sections.enter().append("div")
+          .attr("class", d => "vzb-facet-inner")
+          //add an intermediary div with null datum to prevent unwanted data inheritance to subcomponent
+          //https://stackoverflow.com/questions/17846806/preventing-unwanted-data-inheritance-with-selection-select
+          .each(function (d) {
+            d3.select(this).append("div")
+              .datum(null)
+              .attr("class", () => `${facetedComponentCssClass} vzb-${getFacetId(d)}`);
+          })
+          .each(d => this.addSubcomponent(d))
+          .merge(sections)
+          .style("grid-row-start", (d) => this.getPosition(facetKeys.indexOf(d)).row.start)
+          .style("grid-row-end", (d) => this.getPosition(facetKeys.indexOf(d)).row.end)
+          .style("grid-column-start", (_, i) => 0 + 1)
+
+          .classed("vzb-facet-row-first", d => this.getPosition(facetKeys.indexOf(d)).row.first)
+          .classed("vzb-facet-row-last", d => this.getPosition(facetKeys.indexOf(d)).row.last)
+          .classed("vzb-facet-column-first", d => this.getPosition(facetKeys.indexOf(d)).column.first)
+          .classed("vzb-facet-column-last", d => this.getPosition(facetKeys.indexOf(d)).column.last)
+
+          .each((d, i) => {
+            this.findChild({ name: getFacetId(d) }).state.positionInFacet = this.getPosition(facetKeys.indexOf(d));
+          });
+
+        this.services.layout._resizeHandler();
+      });
+    }
+
+    getPosition(i) {
+      const nrows = [...this.data.keys()].length;
+      const ncolumns = 1;
+      const result = {
+        row: firstLastOrMiddle$1(i, nrows),
+        column: firstLastOrMiddle$1(0, ncolumns)
+      };
+
+      result.row.start = (result.row.first ? 0 : (i + 1)) + 1; //+1 is correction for 1-based numbers in css vs 0-based in array index
+      result.row.end = (result.row.last ? (nrows + 2) : (i + 2)) + 1;
+
+      return result;
+    }
+
+    addSubcomponent(d) {
+      console.log("adding", d);
+      const { facetedComponent } = this.options;
+      const name = getFacetId(d);
+
+      const subcomponent = new facetedComponent({
+        placeholder: ".vzb-" + name,
+        model: this.model,
+        name,
+        parent: this,
+        root: this.root,
+        state: {
+          alias: this.state.alias,
+          positionInRepeat: this.state.positionInRepeat
+        },
+        services: this.services,
+        ui: this.ui,
+        default_ui: this.DEFAULT_UI
+      });
+      this.children.push(subcomponent);
+    }
+
+
+    removeSubcomponent(d) {
+      console.log("removing", d);
+      const subcomponent = this.findChild({ name: getFacetId(d) });
+      if (subcomponent) {
+        subcomponent.deconstruct();
+        const index = this.children.indexOf(subcomponent);
+        if (index >= 0) this.children.splice(index, 1);
+      }
+    }
+  }
+
+  _Facet.DEFAULT_UI = {
+  };
+
+  const Facet = mobx.decorate(_Facet, {
+    "MDL": mobx.computed,
+    "data": mobx.computed,
+    "scaleRange": mobx.observable,
+    "maxValues": mobx.computed,
+    "largetstFacetId": mobx.computed,
+  });
+
   /*!
    * VIZABI INDICATOR PICKER
    * Reusable indicator picker component
@@ -6825,7 +7311,7 @@
           const constant = this.MDL.model.data.constant;
           const scaleModelType = this.MDL.model.scale.config.modelType;
           selectText = this.localise("indicator/" + constant + (scaleModelType ? "/" + scaleModelType : ""));
-        } else if (this.showHoverValues && this.MDL.highlighted.data.filter.any()) {
+        } else if (this.showHoverValues && this.MDL.highlighted.data.filter.any() && !this.MDL.model.scale.isPattern) {
           const highlightedMarkers = this.MDL.highlighted.data.filter.markers;
           const [key, payload] = highlightedMarkers.entries().next().value;
           const hoverKey = (this.model.dataMap.getByStr(key) || (payload !== true && JSON.parse(payload)) || {})[this.targetProp];
@@ -6835,7 +7321,7 @@
             if (this.state.hoverKeyLabels && this.state.hoverKeyLabels[hoverKey] != null)
               selectText = this.state.hoverKeyLabels[hoverKey];
             else
-              selectText = this.localise(hoverKey);
+              selectText = this.localise(hoverKey);          
           } else {        
             selectText = this.localise(hoverKey);
           }
@@ -6867,18 +7353,21 @@
       minLabelTextSize: 7,
       maxLabelTextSize: 21,
       defaultLabelTextSize: 12,
+      closeCrossSize: 16 * 1.2,
       labelLeashCoeff: 0.4
     },
     MEDIUM: {
       minLabelTextSize: 7,
       maxLabelTextSize: 30,
       defaultLabelTextSize: 15,
+      closeCrossSize: 20 * 1.2,
       labelLeashCoeff: 0.3
     },
     LARGE: {
       minLabelTextSize: 6,
       maxLabelTextSize: 48,
       defaultLabelTextSize: 20,
+      closeCrossSize: 22 * 1.2,
       labelLeashCoeff: 0.2
     }
   };
@@ -6888,16 +7377,17 @@
       minLabelTextSize: 15,
       maxLabelTextSize: 35,
       defaultLabelTextSize: 15,
+      closeCrossSize: 26 * 1.2,
       labelLeashCoeff: 0.3
     },
     LARGE: {
       minLabelTextSize: 20,
       maxLabelTextSize: 55,
       defaultLabelTextSize: 20,
+      closeCrossSize: 32 * 1.2,
       labelLeashCoeff: 0.2
     }
   };
-
 
   const OPTIONS$5 = {
     LABELS_CONTAINER_CLASS: "",
@@ -6948,50 +7438,13 @@
 
     draw() {
       this.addReaction(this._updateLayoutProfile);
-
-      //this._clearInitialFontSize();
       this.addReaction(this.selectDataPoints);
       this.addReaction(this.updateSizeTextScale);
       this.addReaction(this.updateLabelSizeLimits);
       this.addReaction(this.updateLabelsOnlyTextSize);
+      this.addReaction(this.updateCloseCrossHeight);
+      this.addReaction(this.updateTooltipFontSize);
     }
-
-    readyOnce() {
-      //const _this = this;
-
-      // this.model.on("change:marker.select", (evt, path) => {
-      //   if (!_this.context._readyOnce) return;
-      //   if (path.indexOf("select.labelOffset") !== -1) return;
-
-      //   //console.log("EVENT change:entities:select");
-      //   _this.selectDataPoints();
-      // });
-
-      // if (this.model.marker.size_label)
-      //   this.model.on("change:marker.size_label.extent", (evt, path) => {
-      //     //console.log("EVENT change:marker:size:max");
-      //     if (!_this.context._readyOnce) return;
-      //     _this.updateLabelSizeLimits();
-      //     if (_this.model.time.splash) return;
-      //     _this.updateLabelsOnlyTextSize();
-      //   });
-
-      // if (this.model.ui.chart.labels.hasOwnProperty("removeLabelBox"))
-      //   this.model.on("change:ui.chart.labels.removeLabelBox", (evt, path) => {
-      //     //console.log("EVENT change:marker:size:max");
-      //     if (!_this.context._readyOnce) return;
-      //     _this.updateLabelsOnlyTextSize();
-      //   });
-
-      // if (this.model.ui.chart.labels.hasOwnProperty("enabled"))
-      //   this.model.on("change:ui.chart.labels.enabled", (evt, path) => {
-      //     if (!_this.context._readyOnce) return;
-      //     _this.selectDataPoints();
-      //   });
-      
-    }
-
-
 
     updateLabelSizeLimits() {
       if (!this.MDL.size_label) return;
@@ -7036,10 +7489,14 @@
       this._yScale = yScale;
     }
 
-    setCloseCrossHeight(closeCrossHeight) {
+    updateCloseCrossHeight() {
+      this.services.layout.size;
+      const closeCrossHeight = this.profileConstants.closeCrossSize;
+
       if (this._closeCrossHeight != closeCrossHeight) {
         this._closeCrossHeight = closeCrossHeight;
-        this.updateLabelCloseGroupSize(this.entityLabels.selectAll("." + this.options.CSS_PREFIX + "-label-x"), this._closeCrossHeight);
+        if (this.entityLabels)
+          this.updateLabelCloseGroupSize(this.entityLabels.selectAll("." + this.options.CSS_PREFIX + "-label-x"), this._closeCrossHeight);
       }
     }
 
@@ -7112,6 +7569,7 @@
 
     highlight(d, highlight) {
       let labels = this.entityLabels;
+      if (!labels) return;
       if (d) {
         labels = labels.filter(f => d ? key(f) == key(d) : true);
       }
@@ -7207,8 +7665,9 @@
       }
     }
 
-    setTooltipFontSize(fontSize) {
-      this.tooltipEl.style("font-size", fontSize);
+    updateTooltipFontSize() {
+      this.services.layout.size;
+      this.tooltipEl.style("font-size", this.profileConstants.defaultLabelTextSize);
     }
 
     _updateLabelSize(d, cache, labelGroup, valueLST, text) {
@@ -7263,7 +7722,7 @@
       if (!cached.textWidth || cached.textWidth != contentBBox.width) {
         cached.textWidth = contentBBox.width;
 
-        const labelCloseHeight = _this._closeCrossHeight || contentBBox.height;//_this.profileConstants.infoElHeight * 1.2;//contentBBox.height;
+        const labelCloseHeight = _this._closeCrossHeight || contentBBox.height;
 
         const isRTL = _this.services.locale.isRTL();
         const labelCloseGroup = labelGroup.select("." + _cssPrefix + "-label-x")
@@ -7293,14 +7752,6 @@
       if (glowRect.attr("stroke") !== cached.scaledC0) {
         glowRect.attr("stroke", cached.scaledC0);
       }
-    }
-
-    _clearInitialFontSize() {
-      forEach(this.cached, cache => {
-        if (!cache) return;
-        cache.initFontSize = null;
-        cache.initTextBBox = null;
-      });
     }
 
     updateLabelCloseGroupSize(labelCloseGroup, labelCloseHeight) {
@@ -7828,7 +8279,7 @@
     removeLabelBox: false
   };
 
-  const decorated$7 = mobx.decorate(Labels, {
+  const decorated$6 = mobx.decorate(Labels, {
     "MDL": mobx.computed
   });
 
@@ -7971,9 +8422,13 @@
     selectZoomedMinMax: true
   };
 
-  const decorated$6 = mobx.decorate(MinMaxInputs, {
+  const decorated$5 = mobx.decorate(MinMaxInputs, {
     "MDL": mobx.computed
   });
+
+  function firstLastOrMiddle(index, total){
+    return {first: index === 0, last: index + 1 === total};
+  }
 
   class _Repeater extends BaseComponent {
 
@@ -7990,7 +8445,7 @@
 
 
     addRemoveSubcomponents(){
-      const {componentCssName} = this.options;
+      const {repeatedComponentCssClass} = this.options;
       const {rowcolumn, ncolumns, nrows} = this.MDL.repeat;
       const repeat = this.MDL.repeat;
 
@@ -8000,7 +8455,7 @@
         .style("grid-template-rows", "1fr ".repeat(nrows))
         .style("grid-template-columns", "1fr ".repeat(ncolumns));
 
-      let sections = this.element.selectAll("div." + componentCssName)
+      let sections = this.element.selectAll(".vzb-repeat-inner")
         .data(rowcolumn, d => repeat.getName(d));
 
       sections.exit()
@@ -8008,21 +8463,41 @@
         .remove();      
 
       sections.enter().append("div")
-        .attr("class", d => `${componentCssName} vzb-${repeat.getName(d)}`)
-        .each(d => this.addSubcomponent(d))
+        .attr("class", "vzb-repeat-inner")
+        //add an intermediary div with null datum to prevent unwanted data inheritance to subcomponent
+        //https://stackoverflow.com/questions/17846806/preventing-unwanted-data-inheritance-with-selection-select
+        .each(function(d){
+          d3.select(this).append("div")
+            .datum(null)
+            .attr("class", () => `${repeatedComponentCssClass} vzb-${repeat.getName(d)}`);
+        })
+        .each((d,i) => this.addSubcomponent(d,i))
         .merge(sections)      
         .style("grid-row-start", (_, i) => repeat.getRowIndex(i) + 1)
-        .style("grid-column-start", (_, i) => repeat.getColumnIndex(i) + 1);
+        .style("grid-column-start", (_, i) => repeat.getColumnIndex(i) + 1)
+        .each((d,i) => {
+          this.findChild({name: repeat.getName(d)}).state.positionInRepeat = this.getPosition(i);
+        });
 
       this.services.layout._resizeHandler();
     }
 
+    getPosition(i){
+      const repeat = this.MDL.repeat;
+      const {ncolumns, nrows} = repeat;
 
-    addSubcomponent(d){
-      const {ComponentClass} = this.options;
+      return {
+        row: firstLastOrMiddle(repeat.getRowIndex(i), nrows),
+        column: firstLastOrMiddle(repeat.getColumnIndex(i), ncolumns)
+      }
+    }
+
+    addSubcomponent(d, index){
+      const {repeatedComponent} = this.options;
       const name = this.MDL.repeat.getName(d);
 
-      const subcomponent = new ComponentClass({
+      const subcomponent = new repeatedComponent({
+        id: this.id + "-" + index,
         placeholder: ".vzb-" + name,
         model: this.model,
         name,
@@ -8030,6 +8505,7 @@
         root: this.root,
         state: {alias: d},
         services: this.services,
+        options: this.options.repeatedComponentOptions,
         ui: this.ui,
         default_ui: this.DEFAULT_UI
       });
@@ -8123,7 +8599,7 @@
 
     _setModel(value) {
       if (this.options.setCheckboxFunc) {
-        this.MDL.model[this.options.setCheckboxFunc](value);
+        this.options.setCheckboxFunc(value);
       } else {
         this.MDL.model[this.options.checkbox] = value;
       }
@@ -8717,7 +9193,7 @@
 
   }
 
-  const decorated$5 = mobx.decorate(SteppedSlider, {
+  const decorated$4 = mobx.decorate(SteppedSlider, {
     "MDL": mobx.computed
   });
 
@@ -8949,7 +9425,7 @@
 
     _configEndBeforeForecast() {
       const frame = this.MDL.frame;
-      const { offset, floor } = this.services.Vizabi.Vizabi.utils.interval(frame.data.concept);
+      const { offset, floor } = this.services.Vizabi.Vizabi.utils.interval(frame.interval);
       if (!this.root.ui.chart.endBeforeForecast) {
         const stepBack = floor(offset(new Date(), -1));
         this.root.ui.chart.endBeforeForecast = frame.formatValue(stepBack);
@@ -9284,7 +9760,7 @@
     dragging: false
   };
 
-  const decorated$4 = mobx.decorate(TimeSlider, {
+  const decorated$3 = mobx.decorate(TimeSlider, {
     "xScale": mobx.computed,
     "MDL": mobx.computed
   });
@@ -10810,6 +11286,7 @@
 
           const allowedTypes = _this._targetModel.scale.allowedTypes;
           const isEntity = indicatorsDB[f].concept_type == "entity_domain" || indicatorsDB[f].concept_type == "entity_set";
+          const isString = indicatorsDB[f].concept_type == "string";
           const isMeasure = indicatorsDB[f].concept_type == "measure";
           const isTime = indicatorsDB[f].concept_type == "time";
           const isConstant = f === "_default"; //TODO: refactor constants
@@ -10831,6 +11308,9 @@
             if (allowedTypes.includes("ordinal")) return true;
           } else if (isConstant) {
             //for constants need a ordinal scale to be allowed
+            if (allowedTypes.includes("ordinal")) return true;
+          } else if (isString) {
+            //for strings need a ordinal scale to be allowed
             if (allowedTypes.includes("ordinal")) return true;
           } else if (isMeasure){
             // for measures need linear or log or something
@@ -11544,7 +12024,7 @@
     snapValue: null
   };
 
-  class SingleHandleSlider extends decorated$b {
+  class SingleHandleSlider extends decorated$a {
 
 
     setup(_options) {
@@ -11669,131 +12149,6 @@
    */
 
   const OPTIONS$1 = {
-    propertyName: "LabelTextSize",
-
-    PROFILE_CONSTANTS: {
-      SMALL: {
-        minLabelTextSize: 7,
-        maxLabelTextSize: 21,
-        defaultLabelTextSize: 12
-      },
-      MEDIUM: {
-        minLabelTextSize: 7,
-        maxLabelTextSize: 30,
-        defaultLabelTextSize: 15
-      },
-      LARGE: {
-        minLabelTextSize: 6,
-        maxLabelTextSize: 48,
-        defaultLabelTextSize: 20
-      }
-    }
-  };
-
-  class SizeSlider extends decorated$b {
-    setup(_options) {
-      const options = deepExtend(deepExtend({}, OPTIONS$1), _options || {});
-
-      super.setup(options);
-
-      const barWidth = this.options.BAR_WIDTH;
-
-      this.DOM.sliderLabelsWrapper = this.DOM.slider.append("g");
-      this.DOM.sliderLabelsWrapper.selectAll("text").data([0, 0]).enter()
-        .append("text")
-        .attr("class", (d, i) => "vzb-szs-slider-thumb-label " + (i ? "e" : "w"))
-        .attr("dy", (-barWidth * 1.25) + "px");
-
-      this.DOM.sliderLabels = this.DOM.slider.selectAll("text.vzb-szs-slider-thumb-label");
-
-      this.propertyScale = d3.scaleLinear()
-        .domain([this.options.EXTENT_MIN, this.options.EXTENT_MAX])
-        .clamp(true);
-
-    }
-
-    draw() { 
-      super.draw();
-
-      if (this.MDL.model.data.isConstant) {
-        this.DOM.slider.selectAll(".w").classed("vzb-hidden", true);
-        this.DOM.slider.select(".selection").classed("vzb-hidden", true);
-        this.DOM.slider.select(".overlay").classed("vzb-pointerevents-none", true);
-      } else {
-        this.DOM.slider.selectAll(".w").classed("vzb-hidden", false);
-        this.DOM.slider.select(".selection").classed("vzb-hidden", false);
-        this.DOM.slider.select(".overlay").classed("vzb-pointerevents-none", false);
-      }
-
-      this.addReaction(this._setLabelsText);
-    }
-
-    _updateThumbs(extent) {
-      this._updateLabels(extent);
-    }
-
-    _updateLabels(s) {
-      if (s) { this.DOM.sliderLabels.data(s); }
-      this.DOM.sliderLabels
-        .attr("transform", (d, i) => {
-          const dX = this.rescaler(i);
-          const dY = 0;
-          return "translate(" + ((this.services.locale.isRTL() ? -1 : 1) * dX) + "," + (dY) + ")";
-        })
-        .attr("font-size", (d) => this.propertyScale(d));
-      if (this.MDL.model.data.isConstant)
-        this.DOM.sliderLabels.text(d => ~~(this.propertyScale(d)) + (this.localise(this.options.constantUnit) || ""));
-    }
-
-    _setLabelsText() {
-      const domain = this.MDL.model.domain;
-      const texts = [domain[0], domain[domain.length - 1]].map(this.localise);
-
-      if (this.MDL.model.data.isConstant) return;
-
-      this.DOM.sliderLabels.text((d, i) => texts[i]);
-    }
-
-    _getMinMaxDefaultPropertyValues() {
-      const propertyName = this.options.propertyName;
-
-      return {
-        min: this.profileConstants["min" + propertyName],
-        max: this.profileConstants["max" + propertyName],
-        default: this.profileConstants["default" + propertyName],
-      };
-    }
-
-    _updateSize() {
-      const propertyValues = this._getMinMaxDefaultPropertyValues();
-
-      this.padding.top = propertyValues.max + this.options.BAR_WIDTH * 1.25;
-      this.propertyScale.range([propertyValues.min, propertyValues.max]);
-
-      super._updateSize();
-
-      const isRTL = this.services.locale.isRTL();
-      this.DOM.sliderLabelsWrapper
-        .attr("transform", isRTL ? "scale(-1,1)" : null);
-      this.DOM.sliderLabels
-        .attr("text-anchor", (d, i) => (isRTL ? i : !i) ? "start" : "end");
-    }
-
-    _valueToExtent(value) {
-      if (this.MDL.model.data.isConstant && value[1] === null) {
-        return super._valueToExtent([value[0], this.propertyScale.invert(this._getMinMaxDefaultPropertyValues().default)]);
-      }
-      return super._valueToExtent(value);
-    }
-
-  }
-
-  /*!
-   * VIZABI BUBBLE SIZE slider
-   * Reusable bubble size slider
-   */
-
-  const OPTIONS = {
     TEXT_PARAMS: { TOP: 11, LEFT: 10, MAX_WIDTH: 42, MAX_HEIGHT: 16 },
     THUMB_STROKE_WIDTH: 4,
     labelsValue: "domain",
@@ -11808,9 +12163,9 @@
     }
   };
 
-  class BubbleSize extends decorated$b {
+  class BubbleSize extends decorated$a {
     setup(_options) {
-      const options = deepExtend(deepExtend({}, OPTIONS), _options || {});
+      const options = deepExtend(deepExtend({}, OPTIONS$1), _options || {});
 
       super.setup(options);
 
@@ -11917,6 +12272,131 @@
 
   }
 
+  /*!
+   * VIZABI BUBBLE SIZE slider
+   * Reusable bubble size slider
+   */
+
+  const OPTIONS = {
+    propertyName: "LabelTextSize",
+
+    PROFILE_CONSTANTS: {
+      SMALL: {
+        minLabelTextSize: 7,
+        maxLabelTextSize: 21,
+        defaultLabelTextSize: 12
+      },
+      MEDIUM: {
+        minLabelTextSize: 7,
+        maxLabelTextSize: 30,
+        defaultLabelTextSize: 15
+      },
+      LARGE: {
+        minLabelTextSize: 6,
+        maxLabelTextSize: 48,
+        defaultLabelTextSize: 20
+      }
+    }
+  };
+
+  class SizeSlider extends decorated$a {
+    setup(_options) {
+      const options = deepExtend(deepExtend({}, OPTIONS), _options || {});
+
+      super.setup(options);
+
+      const barWidth = this.options.BAR_WIDTH;
+
+      this.DOM.sliderLabelsWrapper = this.DOM.slider.append("g");
+      this.DOM.sliderLabelsWrapper.selectAll("text").data([0, 0]).enter()
+        .append("text")
+        .attr("class", (d, i) => "vzb-szs-slider-thumb-label " + (i ? "e" : "w"))
+        .attr("dy", (-barWidth * 1.25) + "px");
+
+      this.DOM.sliderLabels = this.DOM.slider.selectAll("text.vzb-szs-slider-thumb-label");
+
+      this.propertyScale = d3.scaleLinear()
+        .domain([this.options.EXTENT_MIN, this.options.EXTENT_MAX])
+        .clamp(true);
+
+    }
+
+    draw() { 
+      super.draw();
+
+      if (this.MDL.model.data.isConstant) {
+        this.DOM.slider.selectAll(".w").classed("vzb-hidden", true);
+        this.DOM.slider.select(".selection").classed("vzb-hidden", true);
+        this.DOM.slider.select(".overlay").classed("vzb-pointerevents-none", true);
+      } else {
+        this.DOM.slider.selectAll(".w").classed("vzb-hidden", false);
+        this.DOM.slider.select(".selection").classed("vzb-hidden", false);
+        this.DOM.slider.select(".overlay").classed("vzb-pointerevents-none", false);
+      }
+
+      this.addReaction(this._setLabelsText);
+    }
+
+    _updateThumbs(extent) {
+      this._updateLabels(extent);
+    }
+
+    _updateLabels(s) {
+      if (s) { this.DOM.sliderLabels.data(s); }
+      this.DOM.sliderLabels
+        .attr("transform", (d, i) => {
+          const dX = this.rescaler(i);
+          const dY = 0;
+          return "translate(" + ((this.services.locale.isRTL() ? -1 : 1) * dX) + "," + (dY) + ")";
+        })
+        .attr("font-size", (d) => this.propertyScale(d));
+      if (this.MDL.model.data.isConstant)
+        this.DOM.sliderLabels.text(d => ~~(this.propertyScale(d)) + (this.localise(this.options.constantUnit) || ""));
+    }
+
+    _setLabelsText() {
+      const domain = this.MDL.model.domain;
+      const texts = [domain[0], domain[domain.length - 1]].map(this.localise);
+
+      if (this.MDL.model.data.isConstant) return;
+
+      this.DOM.sliderLabels.text((d, i) => texts[i]);
+    }
+
+    _getMinMaxDefaultPropertyValues() {
+      const propertyName = this.options.propertyName;
+
+      return {
+        min: this.profileConstants["min" + propertyName],
+        max: this.profileConstants["max" + propertyName],
+        default: this.profileConstants["default" + propertyName],
+      };
+    }
+
+    _updateSize() {
+      const propertyValues = this._getMinMaxDefaultPropertyValues();
+
+      this.padding.top = propertyValues.max + this.options.BAR_WIDTH * 1.25;
+      this.propertyScale.range([propertyValues.min, propertyValues.max]);
+
+      super._updateSize();
+
+      const isRTL = this.services.locale.isRTL();
+      this.DOM.sliderLabelsWrapper
+        .attr("transform", isRTL ? "scale(-1,1)" : null);
+      this.DOM.sliderLabels
+        .attr("text-anchor", (d, i) => (isRTL ? i : !i) ? "start" : "end");
+    }
+
+    _valueToExtent(value) {
+      if (this.MDL.model.data.isConstant && value[1] === null) {
+        return super._valueToExtent([value[0], this.propertyScale.invert(this._getMinMaxDefaultPropertyValues().default)]);
+      }
+      return super._valueToExtent(value);
+    }
+
+  }
+
   // var class_active_locked = "vzb-active-locked";
   // var class_hide_btn = "vzb-dialog-side-btn";
   // var class_unavailable = "vzb-unavailable";
@@ -11967,7 +12447,7 @@
     return `<a class='vzb-underline' href='${link}' target='_blank'>⧉ ${text}</a>`;
   }
 
-  class About extends decorated$8 {
+  class About extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -12058,13 +12538,13 @@
     }
   }
 
-  decorated$8.add("about", About);
+  decorated$7.add("about", About);
 
   /*
    * Axes dialog
    */
 
-  class Axes extends decorated$8 {
+  class Axes extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -12101,7 +12581,7 @@
           targetProp: "x"
         }
       },{
-        type: decorated$6,
+        type: decorated$5,
         placeholder: ".vzb-xaxis-minmax",
         state: {
           submodel: "encoding.x.scale"
@@ -12114,7 +12594,7 @@
           targetProp: "y"
         }
       },{
-        type: decorated$6,
+        type: decorated$5,
         placeholder: ".vzb-yaxis-minmax",
         state: {
           submodel: "encoding.y.scale"
@@ -12126,13 +12606,13 @@
 
   }
 
-  decorated$8.add("axes", Axes);
+  decorated$7.add("axes", Axes);
 
   /*!
    * VIZABI COLOR DIALOG
    */
 
-  class Colors extends decorated$8 {
+  class Colors extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -12187,7 +12667,7 @@
           }
         }
       }, {
-        type: decorated$a,
+        type: decorated$9,
         placeholder: ".vzb-clegend-container",
         options: {
           colorModelName: "color",
@@ -12200,7 +12680,7 @@
 
   }
 
-  decorated$8.add("colors", Colors);
+  decorated$7.add("colors", Colors);
 
   /*!
    * VIZABI SHOW PANEL CONTROL
@@ -12264,15 +12744,17 @@
     }
 
     _updateView() {
+      const _this = this;
       if (this.parent._getPanelMode() !== "show") return;
 
       
       function addCategory(catalog, dim) {
         if (catalog.entities) {
+          const filterSpec = _this.model.encoding.show?.data.filter.dimensions[dim];
           categories.push({
             dim,
             key: catalog.concept.concept,
-            entities: catalog.entities,
+            entities: catalog.entities.filter(filterSpec),
             name: catalog.concept.name
           });
         }
@@ -12305,13 +12787,6 @@
           }))
           //sort data alphabetically
           .sort((a, b) => (a.name < b.name) ? -1 : 1);
-      
-        //TODO: HACK remove this UN state filter when we will be able to request entity properties separately
-        if (this.model.encoding.unstate && key == this.model.encoding.unstate.data.space[0]){
-          const response = this.model.encoding.unstate.data.response;
-          entities = entities
-            .filter(entity => response.get(entity).un_state);
-        }
         
         const section = this.DOM.list.append("div")
           .attr("class", "vzb-accordion-section")
@@ -12444,7 +12919,7 @@
       let showEquals = true;
       const space = this.model.data.space;
       forEach(space, key => {
-        showEquals = comparePlainObjects(this.resetFilter[key] || {}, this.model.data.filter.dimensions[key]);
+        showEquals = comparePlainObjects(this.resetFilter[key] || {}, this.model.data.filter.dimensions[key] || {});
         return showEquals;
       });
 
@@ -12501,7 +12976,7 @@
    * Reusable find dialog
    */
 
-  class Find extends decorated$8 {
+  class Find extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -12823,17 +13298,17 @@
     enablePicker: false
   };
 
-  const decorated$3 = mobx.decorate(Find, {
+  const decorated$2 = mobx.decorate(Find, {
     "MDL": mobx.computed
   });
 
-  decorated$8.add("find", decorated$3);
+  decorated$7.add("find", decorated$2);
 
   /*
    * Label dialog
    */
 
-  class Label extends decorated$8 {
+  class Label extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -12885,63 +13360,13 @@
     }
   }
 
-  decorated$8.add("label", Label);
-
-  /*
-   * Size dialog
-   */
-
-  class Opacity extends decorated$8 {
-    constructor(config) {
-      config.template = `
-      <div class='vzb-dialog-modal'>
-        <div class="vzb-dialog-title"> 
-          <span data-localise="buttons/opacity"></span>
-        </div>
-            
-        <div class="vzb-dialog-content">
-          <p class="vzb-dialog-sublabel">
-            <span data-localise="buttons/opacityRegular"></span>
-          </p>
-          <div class="vzb-dialog-bubbleopacity-regular"></div>
-
-          <p class="vzb-dialog-sublabel">
-            <span data-localise="buttons/opacityNonselect"></span>
-          </p>
-          <div class="vzb-dialog-bubbleopacity-selectdim"></div>
-          </div>
-        </div>
-
-      </div>
-    `;
-
-      config.subcomponents = [{
-        type: SingleHandleSlider,
-        placeholder: ".vzb-dialog-bubbleopacity-regular",
-        options: {
-          value: "opacityRegular",
-          submodel: "root.ui.chart"
-        }
-      },{
-        type: SingleHandleSlider,
-        placeholder: ".vzb-dialog-bubbleopacity-selectdim",
-        options: {
-          value: "opacitySelectDim",
-          submodel: "root.ui.chart"
-        }
-      }];
-
-      super(config);
-    }
-  }
-
-  decorated$8.add("opacity", Opacity);
+  decorated$7.add("label", Label);
 
   /*
    * More options dialog
    */
 
-  class MoreOptions extends decorated$8 {
+  class MoreOptions extends decorated$7 {
     constructor(config) {
       const { moreoptions = [], popup = []} = config.parent.ui.dialogs;
       const templateArray  = [];
@@ -12954,7 +13379,7 @@
 
       dialogList.forEach(dlg => {      
         subcomponents.push({
-          type: decorated$8.get(dlg),
+          type: decorated$7.get(dlg),
           placeholder: '.vzb-dialogs-dialog[data-dlg="' + dlg + '"]',
           model: config.model,
           name: dlg,
@@ -13044,13 +13469,63 @@
     }
   }
 
-  decorated$8.add("moreoptions", MoreOptions);
+  decorated$7.add("moreoptions", MoreOptions);
 
   /*
    * Size dialog
    */
 
-  class Presentation extends decorated$8 {
+  class Opacity extends decorated$7 {
+    constructor(config) {
+      config.template = `
+      <div class='vzb-dialog-modal'>
+        <div class="vzb-dialog-title"> 
+          <span data-localise="buttons/opacity"></span>
+        </div>
+            
+        <div class="vzb-dialog-content">
+          <p class="vzb-dialog-sublabel">
+            <span data-localise="buttons/opacityRegular"></span>
+          </p>
+          <div class="vzb-dialog-bubbleopacity-regular"></div>
+
+          <p class="vzb-dialog-sublabel">
+            <span data-localise="buttons/opacityNonselect"></span>
+          </p>
+          <div class="vzb-dialog-bubbleopacity-selectdim"></div>
+          </div>
+        </div>
+
+      </div>
+    `;
+
+      config.subcomponents = [{
+        type: SingleHandleSlider,
+        placeholder: ".vzb-dialog-bubbleopacity-regular",
+        options: {
+          value: "opacityRegular",
+          submodel: "root.ui.chart"
+        }
+      },{
+        type: SingleHandleSlider,
+        placeholder: ".vzb-dialog-bubbleopacity-selectdim",
+        options: {
+          value: "opacitySelectDim",
+          submodel: "root.ui.chart"
+        }
+      }];
+
+      super(config);
+    }
+  }
+
+  decorated$7.add("opacity", Opacity);
+
+  /*
+   * Size dialog
+   */
+
+  class Presentation extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -13113,14 +13588,14 @@
 
   }
 
-  decorated$8.add("presentation", Presentation);
+  decorated$7.add("presentation", Presentation);
 
   /*
    * Repeat dialog
    */
 
 
-  class Repeat extends decorated$8 {
+  class Repeat extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -13132,7 +13607,9 @@
         </div>
 
         <div class="vzb-dialog-content">
-          <div class="vzb-repeat-header"></div>
+          <div class="vzb-repeat-header">
+            <div class="vzb-useConnectedRowsAndColumns-switch"></div>
+          </div>
           <div class="vzb-repeat-body">
             <div class="vzb-repeat-grid"></div>
           </div>
@@ -13145,6 +13622,16 @@
         </div>
       </div>
     `;
+
+      config.subcomponents = [{
+        type: SimpleCheckbox,
+        placeholder: ".vzb-useConnectedRowsAndColumns-switch",
+        options: {
+          checkbox: "useConnectedRowsAndColumns",
+          submodelFunc: () => this.MDL.repeat,
+          setCheckboxFunc: (value) => this.MDL.repeat.config.useConnectedRowsAndColumns = value
+        }
+      }];
 
       super(config);
     }
@@ -13174,14 +13661,16 @@
     drawHeader(){
       const header = this.DOM.header;
       const localise = this.services.locale.auto();
-      const {allowEnc, useConnectedRowsAndColumns} = this.MDL.repeat;
+      const {allowEnc, row, column, useConnectedRowsAndColumns} = this.MDL.repeat;
 
       header.selectAll("p").remove();
-      header.append("p")
-        .attr("class", "vzb-repeat-experimental")
-        .html(localise("hint/experimentalfeature"));
-      header.append("p")
+
+      header.insert("p", "div")
+        .attr("class", "vzb-dialog-sublabel")
         .html(localise("hint/repeat/addremovecharts"));
+
+      header.select(".vzb-useConnectedRowsAndColumns-switch")
+        .classed("vzb-hidden", !(row && row.length && column && column.length && allowEnc.length === 2));
 
       if (useConnectedRowsAndColumns) {
         header.append("p")
@@ -13211,17 +13700,17 @@
         .style("grid-column-start", (_, i) => repeat.getColumnIndex(i) + 1)
         .html(() => ncolumns == 1 && nrows == 1 ? localise("hint/repeat/pressplus") : "")
         .on("mouseover", (event, d) => {
-          d3.select(".vzb-" + repeat.getName(d))
+          this.root.element.select(".vzb-" + repeat.getName(d))
             .classed("vzb-chart-highlight", true);
         })
         .on("mouseout", (event, d) => {
-          d3.select(".vzb-" + repeat.getName(d))
+          this.root.element.select(".vzb-" + repeat.getName(d))
             .classed("vzb-chart-highlight", false);
         });
 
       if (ncolumns > 1) {
         this.DOM.grid.selectAll("div.vzb-repeat-removecolumn")
-          .data(Array(ncolumns))
+          .data(d3.range(ncolumns))
           .enter().append("div")
           .attr("class", "vzb-repeat-removecolumn")
           .html("✖︎")
@@ -13233,7 +13722,7 @@
           .on("mouseover", (_, i) => {
             rowcolumn.forEach((d, index) => {
               if (index % ncolumns == i)
-                d3.select(".vzb-" + repeat.getName(d))
+                this.root.element.select(".vzb-" + repeat.getName(d))
                   .classed("vzb-chart-removepreview", true);
             });
           })
@@ -13244,7 +13733,7 @@
 
       if (nrows > 1) {
         this.DOM.grid.selectAll("div.vzb-repeat-removerow")
-          .data(Array(nrows))
+          .data(d3.range(nrows))
           .enter().append("div")
           .attr("class", "vzb-repeat-removerow")
           .html("✖︎")
@@ -13256,7 +13745,7 @@
           .on("mouseover", (_, i) => {
             rowcolumn.forEach((d, index) => {
               if (Math.floor(index / ncolumns) == i)
-                d3.select(".vzb-" + repeat.getName(d))
+                this.root.element.select(".vzb-" + repeat.getName(d))
                   .classed("vzb-chart-removepreview", true);
             });
           })
@@ -13278,7 +13767,7 @@
         .on("mouseover", () => {
           rowcolumn.forEach((d, i) => {
             if ((i + 1) % ncolumns == 0)
-              d3.select(".vzb-" + repeat.getName(d))
+              this.root.element.select(".vzb-" + repeat.getName(d))
                 .classed("vzb-chart-addrightpreview", true);
           });
         })
@@ -13299,7 +13788,7 @@
         .on("mouseover", () => {
           rowcolumn.forEach((d, i) => {
             if (Math.floor(i / ncolumns) + 1 == nrows)
-              d3.select(".vzb-" + repeat.getName(d))
+              this.root.element.select(".vzb-" + repeat.getName(d))
                 .classed("vzb-chart-addbelowpreview", true);
           });
         })
@@ -13310,7 +13799,7 @@
 
     _clearHoverClasses(array, cssclass){
       array.forEach(d => {
-        const selection = d3.select(".vzb-" + this.MDL.repeat.getName(d));
+        const selection = this.root.element.select(".vzb-" + this.MDL.repeat.getName(d));
 
         if(!cssclass || cssclass == "vzb-chart-highlight")
           selection.classed("vzb-chart-highlight", false);
@@ -13352,7 +13841,7 @@
       mobx.runInAction(() => {
         if(useConnectedRowsAndColumns) {
           const newEncName = this._generateEncodingNames(direction);
-          this.model.config.encoding[newEncName] = {data: {concept: this._getConceptOfLast(direction)}};
+          this.model.config.encoding[newEncName] = {data: this._getConceptAndSourceAndSpaceOfLast(direction)};
           this.MDL.repeat.config[direction].push(newEncName);
         } else {
           this.MDL.repeat.config.rowcolumn = this.MDL.repeat.rowcolumn;
@@ -13360,7 +13849,7 @@
             for (let i = 1; i <= nrows; i++) {
               const newEncNames = this._generateEncodingNames();
               allowEnc.forEach(e => {
-                this.model.config.encoding[newEncNames[e]] = {data: {concept: this._getConceptOfLast(e)}};
+                this.model.config.encoding[newEncNames[e]] = {data: this._getConceptAndSourceAndSpaceOfLast(e)};
               });
               this.MDL.repeat.config.rowcolumn.splice(i * ncolumns, 0, newEncNames);
             }
@@ -13370,7 +13859,7 @@
             for (let i = 1; i <= ncolumns; i++) {
               const newEncNames = this._generateEncodingNames();
               allowEnc.forEach(e => {
-                this.model.config.encoding[newEncNames[e]] = {data: {concept: this._getConceptOfLast(e)}};
+                this.model.config.encoding[newEncNames[e]] = {data: this._getConceptAndSourceAndSpaceOfLast(e)};
               });
               this.MDL.repeat.config.rowcolumn.push(newEncNames);
             }
@@ -13379,7 +13868,7 @@
       });
     }
 
-    _getConceptOfLast(arg){
+    _getConceptAndSourceAndSpaceOfLast(arg){
       const {rowcolumn, allowEnc} = this.MDL.repeat;
 
       let alias = arg;
@@ -13391,10 +13880,12 @@
         alias = allowEnc[1];
 
       return rowcolumn
-        .map(d => this.model.encoding[d[alias]]?.data?.concept)
-        .filter(f => f)
-        .at(-1) || "population_total";
+        .map(d => this.model.encoding[d[alias]]?.data)
+        .filter(f => f?.concept)
+        .map(d => Object.assign({ concept: d.concept }, d.config.source ? { source: d.config.source } : {}, d.config.space ? { space: d.config.space.slice(0) } : {}))
+        .at(-1) || { concept: "population_total" };
     }
+
     _generateEncodingNames(direction){
       const {allowEnc} = this.MDL.repeat;
 
@@ -13420,17 +13911,17 @@
   }
 
 
-  const decorated$2 = mobx.decorate(Repeat, {
+  const decorated$1 = mobx.decorate(Repeat, {
     "MDL": mobx.computed
   });
     
-  decorated$8.add("repeat", decorated$2);
+  decorated$7.add("repeat", decorated$1);
 
   /*
    * Size dialog
    */
 
-  class Size extends decorated$8 {
+  class Size extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -13486,9 +13977,9 @@
     }
   }
 
-  decorated$8.add("size", Size);
+  decorated$7.add("size", Size);
 
-  class Speed extends decorated$8 {
+  class Speed extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -13650,13 +14141,13 @@
 
   }
 
-  const decorated$1 = mobx.decorate(Speed, {
+  const decorated = mobx.decorate(Speed, {
     "MDL": mobx.computed
   });
 
-  decorated$8.add("speed", decorated$1);
+  decorated$7.add("speed", decorated);
 
-  class Technical extends decorated$8 {
+  class Technical extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -13706,83 +14197,36 @@
 
   }
 
-  decorated$8.add("technical", Technical);
+  decorated$7.add("technical", Technical);
 
   /*
    * Timedisplay dialog
    */
-  class TimeDisplay extends decorated$8 {
+  class TimeDisplay extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class="vzb-dialog-modal">
-        <div class="vzb-dialog-content vzb-dialog-content-fixed">
-          <svg>
-            <g class="vzb-timedisplay"></g>
-          </svg>
-        </div>
+        <div class="vzb-dialog-title"></div>
+        <div class="vzb-dialog-content vzb-dialog-content-fixed"></div>
         <div class="vzb-dialog-buttons"></div>
       </div>`;
     
       config.subcomponents = [{
-        type: decorated$9,
-        placeholder: ".vzb-timedisplay"
+        type: decorated$8,
+        placeholder: ".vzb-dialog-content"
       }];
       
       super(config);
     }
-
-    setup(options) {
-      super.setup(options);
-
-      this._date = this.findChild({type: "DateTimeBackground"});
-      this._date.setConditions({ widthRatio: 1, heightRatio: 1 });
-    }
-
-    get MDL() {
-      return {
-        frame: this.model.encoding.frame
-      };
-    }
-
-    draw() {
-      super.draw();
-
-      const _this = this;
-      Object.assign(this.state, {
-        get duration() {
-          return _this.MDL.frame.playing ? _this.MDL.frame.speed || 0 : 0;
-        }
-      });
-
-      this.addReaction(this._updateTime);
-      this.addReaction(this._updateSize);
-
-    }
-
-    _updateTime() {
-      const frame = this.MDL.frame;
-      this._date.setText(frame.value, this.state.duration);
-    }
-
-    _updateSize() {
-      this.services.layout.size;
-
-      if (this._date) {
-        this._date.resizeText(this.DOM.content.style("width"), this.DOM.content.style("height"));
-      }
-    }
   }
 
-  decorated$8.add("timedisplay", TimeDisplay);
-  const decorated = mobx.decorate(TimeDisplay, {
-    "MDL": mobx.computed
-  });
+  decorated$7.add("timedisplay", TimeDisplay);
 
   /*
    * Zoom dialog
    */
 
-  class Zoom extends decorated$8 {
+  class Zoom extends decorated$7 {
     constructor(config) {
       config.template = `
       <div class='vzb-dialog-modal'>
@@ -13846,43 +14290,45 @@
     }
   }
 
-  decorated$8.add("zoom", Zoom);
+  decorated$7.add("zoom", Zoom);
 
   exports.About = About;
+  exports.AddGeo = AddGeo;
   exports.Axes = Axes;
   exports.BaseComponent = BaseComponent;
   exports.BaseService = BaseService;
-  exports.BrushSlider = decorated$b;
+  exports.BrushSlider = decorated$a;
   exports.BubbleSize = BubbleSize;
   exports.Button = Button;
   exports.ButtonList = ButtonList;
   exports.CapitalVizabiService = CapitalVizabiService;
   exports.Chart = Chart;
-  exports.ColorLegend = decorated$a;
+  exports.ColorLegend = decorated$9;
   exports.Colors = Colors;
   exports.DataNotes = DataNotes;
   exports.DataWarning = DataWarning;
-  exports.DateTimeBackground = decorated$9;
+  exports.DateTimeBackground = decorated$8;
   exports.DeepLeaf = DeepLeaf;
-  exports.Dialog = decorated$8;
+  exports.Dialog = decorated$7;
   exports.Dialogs = Dialogs;
   exports.ErrorMessage = ErrorMessage;
-  exports.Find = decorated$3;
+  exports.Facet = Facet;
+  exports.Find = decorated$2;
   exports.Icons = Icons;
   exports.IndicatorPicker = IndicatorPicker;
   exports.Label = Label;
-  exports.Labels = decorated$7;
+  exports.Labels = decorated$6;
   exports.LayoutService = LayoutService;
   exports.LegacyUtils = LegacyUtils;
   exports.LocaleService = LocaleService;
   exports.Menu = Menu;
-  exports.MinMaxInputs = decorated$6;
+  exports.MinMaxInputs = decorated$5;
   exports.MoreOptions = MoreOptions;
   exports.Opacity = Opacity;
   exports.OptionsButtonList = OptionsButtonList;
   exports.PlayButton = PlayButton;
   exports.Presentation = Presentation;
-  exports.Repeat = decorated$2;
+  exports.Repeat = decorated$1;
   exports.Repeater = Repeater;
   exports.Show = Show;
   exports.SimpleCheckbox = SimpleCheckbox;
@@ -13890,16 +14336,17 @@
   exports.Size = Size;
   exports.SizeSlider = SizeSlider;
   exports.SpaceConfig = SpaceConfig;
-  exports.Speed = decorated$1;
-  exports.SteppedSlider = decorated$5;
+  exports.Speed = decorated;
+  exports.SteppedSlider = decorated$4;
   exports.Technical = Technical;
   exports.TextEllipsis = TextEllipsis;
-  exports.TimeDisplay = decorated;
-  exports.TimeSlider = decorated$4;
+  exports.TimeDisplay = TimeDisplay;
+  exports.TimeSlider = decorated$3;
   exports.TreeMenu = TreeMenu;
   exports.Utils = Utils;
   exports.Zoom = Zoom;
   exports.ZoomButtonList = ZoomButtonList;
+  exports._AddGeo = _AddGeo;
   exports.axisSmart = axisSmart;
   exports.collisionResolver = collisionResolver;
   exports.updateRainbowLegend = updateRainbowLegend;

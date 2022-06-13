@@ -1,9 +1,9 @@
-// http://vizabi.org v1.21.1 Copyright 2021 Jasper Heeffer and others at Gapminder Foundation
+// http://vizabi.org v1.24.0 Copyright 2022 Jasper Heeffer and others at Gapminder Foundation
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('mobx')) :
   typeof define === 'function' && define.amd ? define(['mobx'], factory) :
   (global = typeof globalThis !== 'undefined' ? globalThis : global || self, global.Vizabi = factory(global.mobx));
-}(this, (function (mobx) { 'use strict';
+})(this, (function (mobx) { 'use strict';
 
   function _interopNamespace(e) {
     if (e && e.__esModule) return e;
@@ -14,14 +14,12 @@
           var d = Object.getOwnPropertyDescriptor(e, k);
           Object.defineProperty(n, k, d.get ? d : {
             enumerable: true,
-            get: function () {
-              return e[k];
-            }
+            get: function () { return e[k]; }
           });
         }
       });
     }
-    n['default'] = e;
+    n["default"] = e;
     return Object.freeze(n);
   }
 
@@ -659,6 +657,17 @@
       }
       return result;
   }
+  function pickMultiGroup(object, keys) {
+      let result = [{}];
+      for (const key of keys) {
+          if (key in object) {
+              result = [].concat(object[key]).flatMap(objKey => 
+                  result.map(res => Object.assign({}, res,{[key]: objKey}))
+              );
+          }
+      }
+      return result;
+  }
 
   function unique$1(...arrays) {
       const uniqueSet = new Set(arrays.flat());
@@ -1272,17 +1281,17 @@
    * Interpolate within a dataframe. Fill missing values in rows. Inplace.
    * @param {*} df 
    */
-  function interpolate(df, fields = df.fields) {
+  function interpolate(df, fields = df.fields, interpolators = {}) {
       for (let field of fields) {
-          interpolateField(df, field);
+          interpolateField(df, field, interpolators[field]);
       }
       return df;
   }
 
-  function interpolateField(df, field) {
+  function interpolateField(df, field, interpolator) {
       const gap = newGap();
       for (let row of df.values()) {
-          evaluateGap(row, field, gap);
+          evaluateGap(row, field, gap, interpolator);
       }
   }
 
@@ -1293,7 +1302,7 @@
       }
   }
 
-  function evaluateGap(row, field, gap) {
+  function evaluateGap(row, field, gap, interpolator) {
       const { rows, start } = gap;
       const fieldVal = row[field];
       if (fieldVal == null) { // faster for undefined/null check
@@ -1302,17 +1311,17 @@
       } else {
           // fill gap if it exists and is inner
           if (rows.length > 0) {
-              interpolateGap(rows, start, row, field);
+              interpolateGap(rows, start, row, field, interpolator);
               rows.length = 0;
           }
           gap.start = row;
       }
   }
 
-  function interpolateGap(gapRows, startRow, endRow, field) {
+  function interpolateGap(gapRows, startRow, endRow, field, interpolator = d3.interpolate) {
       const startVal = startRow[field];
       const endVal = endRow[field];
-      const int = d3.interpolate(startVal, endVal);
+      const int = interpolator(startVal, endVal);
       const delta = 1 / (gapRows.length+1);
       let mu = 0;
       for (let gapRow of gapRows) {
@@ -1325,7 +1334,7 @@
   }
 
 
-  function interpolateGroup(group, { fields = group.fields, ammendNewRow = () => {} } = {}) {
+  function interpolateGroup(group, { fields = group.fields, interpolators = {}, ammendNewRow = () => {} } = {}) {
       
       // what fields to interpolate?
       const groupFields = group.values().next().value.fields;
@@ -1364,7 +1373,7 @@
                           }
                           const startRow = group.get(frameKeys[lastIndex]).get(markerKey);
                           const endRow = group.get(frameKeys[i]).get(markerKey);
-                          interpolateGap(gapRows, startRow, endRow, field);
+                          interpolateGap(gapRows, startRow, endRow, field, interpolators[field]);
                       }
                       lastIndexPerMarker.set(markerKey, i);
                   }
@@ -1423,6 +1432,53 @@
       }
       return group;
   }
+
+  function DataFrameMultiGroup(data, key, descKeys = []) {
+
+      if (!Array.isArray(descKeys)) descKeys = [[descKeys]]; // desc keys is single string (e.g. 'year')
+      if (!Array.isArray(descKeys[0])) descKeys = [descKeys]; // desc keys is one key (e.g. ['year'])
+      if (!Array.isArray(key)) key = [key]; // key is single string (e.g. 'year')
+      if (descKeys.length === 0 && data.key) descKeys = [data.key];  // descKeys is empty
+      
+      const group = createGroup(key, descKeys);
+      group.setRow = (row, key) => {
+          return getDataFrameMultiGroup(group, row).map(df => df.set(row, key));
+      };
+      group.batchSetRow = (data) => {
+          const descKeys = group.descendantKeys;
+          if (data.key?.length > 0 && arrayEquals$1(data.key, descKeys[descKeys.length - 1])) {
+              for (let row of data.values()) {
+                  getDataFrameMultiGroup(group, row).forEach(df => df.setByStr(row[Symbol.for('key')], row));
+              }
+          } else {
+              for (let row of data.values()) {
+                  getDataFrameMultiGroup(group, row).forEach(df => df.set(row));
+              }
+          }
+          return group;
+      };
+
+      return group.batchSetRow(data);
+  }
+
+  function getDataFrameMultiGroup(group, row) {
+      if (group.type == 'DataFrame') return [group];
+      let members;
+      if (!row) {
+          members = [group.values().next().value];
+      } else {
+          members = pickMultiGroup(row, group.key).map(keyObj => {
+              const keyStr = group.keyFn(keyObj);
+              if (group.has(keyStr)) {
+                  return group.get(keyStr);
+              } else {
+                  return group.createMember(keyObj);
+              }
+          });
+      }
+      return members.flatMap(member => getDataFrameMultiGroup(member, row));
+  }
+
 
   /**
    * 
@@ -1611,6 +1667,12 @@
       
   }
 
+  function groupByWithMultiGroupMembership(df, groupKey, memberKey = df.key) {
+
+      return DataFrameMultiGroup(df, groupKey, memberKey);
+      
+  }
+
   function fillNull(df, fillValues) {
       let concept, row;
       // per concept fill
@@ -1676,9 +1738,9 @@
    * @param {*} to 
    * @param {*} mu 
    */
-  function interpolateBetween(from, to, mu) {
+  function interpolateBetween(from, to, mu, fields = from.fields, interpolators = {}) {
       const df = DataFrame([], from.key);
-      
+
       let newRow, row2;
       for(const key of from.keys()) {
           const row1 = from.getByStr(key);
@@ -1686,8 +1748,8 @@
           if (!row2) continue;
           if (row2 !== row1) { // same object, depends on trails using same object for trail markers across frames.
               newRow = Object.assign({}, row1);
-              for (let field in newRow) {
-                  newRow[field] = d3.interpolate(row1[field], row2[field])(mu);
+              for (let field of fields) {
+                  newRow[field] = (interpolators[field] || d3.interpolate)(row1[field], row2[field])(mu);
               }
           } else {
               newRow = row1;
@@ -1721,8 +1783,9 @@
               project: (projection) => project(df, projection),
               addColumn: (name, value) => addColumn(df, name, value),
               groupBy: (groupKey, memberKey) => groupBy(df, groupKey, memberKey),
+              groupByWithMultiGroupMembership: (groupKey, memberKey) => groupByWithMultiGroupMembership(df, groupKey, memberKey),
               interpolate: () => interpolate(df),
-              interpolateTowards: (df2, mu) => interpolateBetween(df, df2, mu),
+              interpolateTowards: (df2, mu, fields, interpolators) => interpolateBetween(df, df2, mu, fields, interpolators),
               reindex: (iterable) => reindex(df, iterable),
               fillNull: (fillValues) => fillNull(df, fillValues),
               copy: () => copy(df),
@@ -1838,14 +1901,14 @@
       '$nor': (spec) => `!(${spec.map(createFilterFnString).join(' || ')})`,
   };
   const comparisonToString = {
-      "$eq":  (field, val) => `row.${field} === ${val}`,
-      "$ne":  (field, val) => `row.${field} !== ${val}`,
-      "$gt":  (field, val) => `row.${field} > ${val}`,
-      "$gte": (field, val) => `row.${field} >= ${val}`,
-      "$lt":  (field, val) => `row.${field} < ${val}`,
-      "$lte": (field, val) => `row.${field} <= ${val}`,
-      "$in":  (field, val) => `${val}.includes(row.${field})`,
-      "$nin": (field, val) => `!${val}.includes(row.${field})`,
+      "$eq":  (field, val) => `row["${field}"] == ${val}`,
+      "$ne":  (field, val) => `row["${field}"] != ${val}`,
+      "$gt":  (field, val) => `row["${field}"] > ${val}`,
+      "$gte": (field, val) => `row["${field}"] >= ${val}`,
+      "$lt":  (field, val) => `row["${field}"] < ${val}`,
+      "$lte": (field, val) => `row["${field}"] <= ${val}`,
+      "$in":  (field, val) => `${val}.includes(row["${field}"])`,
+      "$nin": (field, val) => `!${val}.includes(row["${field}"])`,
   };
 
   //used by "filterRequired" transform
@@ -2432,10 +2495,15 @@
               concept
           };
           if (source.isEntityConcept(conceptId)) {
+              const setMembershipFlags = source.availability.data
+                  .map(m => m.value)
+                  .filter(f => f.includes("is--") || f == "un_state");
+
               const entityQuery = dataConfig.createQuery({ 
                   space: [conceptId],  
-                  concept: ["name", "rank"],
+                  concept: ["name", "rank", ...setMembershipFlags],
                   locale: dataConfig.locale,
+                  filter: null,
                   source
               });
               promises.push(source.query(entityQuery).then(response => {
@@ -2482,6 +2550,14 @@
       return false;
     }
     return typeof obj[Symbol.iterator] === 'function';
+  }
+
+  function stepBeforeInterpolator(startVal, endVal) {
+      if (typeof startVal === "object") {
+          const jsonStartVal = JSON.stringify(startVal);
+          const jsonEndtVal = JSON.stringify(endVal);
+          return t => JSON.parse(t < 1 ? jsonStartVal : jsonEndtVal);
+      } else return t => t < 1 ? startVal : endVal;
   }
 
   var utils$1 = /*#__PURE__*/Object.freeze({
@@ -2538,7 +2614,8 @@
     getConceptsCatalog: getConceptsCatalog,
     removeOnce: removeOnce,
     lazyAsync: lazyAsync,
-    isIterable: isIterable
+    isIterable: isIterable,
+    stepBeforeInterpolator: stepBeforeInterpolator
   });
 
   const defaultType = config => mobx.observable({ config });
@@ -2905,23 +2982,33 @@
           types.set(field, getConceptType(firstRow[field], field, data.key));
       }
       // check if those types are consistent
-      for (let [field, type] in types) {
-          if (!validateConceptType(data, field, type)) {
+      for (let [field, type] of types) {
+          const checkedType = validateConceptType(data, field, type);
+          if (!checkedType) {
               console.warn("Field " + field + " is not consistently typed " + type);
               types.set(field, "mixed");
+          } else if (type === "null") {
+              types.set(field, checkedType !== type ? checkedType : undefined);
           }
       }
       return types;
   }
 
   function validateConceptType(data, field, type) {
-      for (row of data.values()) {
-          if (getConceptType(row[field], field, data.key) !== type)
-              return false;
+      let conceptType;
+      for (let row of data.values()) {
+          conceptType = getConceptType(row[field], field, data.key);
+          if ( type !== conceptType ) {
+              if (type === "null") {
+                  type = conceptType;
+              } else if (conceptType !== "null") return false;
+          }
       }
+      return type;
   }
 
   function getConceptType(value, field, datakey) {
+      if (value === null) return 'null';
       if (isDate(value)) return 'time';
       if(datakey.includes(field)) return 'entity_domain';
       const type = typeof value;
@@ -3191,11 +3278,17 @@
       }
 
       function returnValuesDtypesAndKeyConcepts({rows, columns}){
+          const values = autotype(rows);
           return {
-              values: autotype(rows),
+              values,
               keyConcepts: guessKeyConcepts(columns, keyConcepts),
               columns,
-              dtypes: TIME_LIKE_CONCEPTS.reduce((dtypes, t) => (dtypes[t] = t, dtypes), {})
+              dtypes: columns.reduce((dtypes, column) => {
+                  const lowerCaseColumn = column.toLowerCase();
+                  //skip dtypes config for time column which typed to Date with d3.autoType already ('day' and 'month' timeformats for ex.)
+                  if (TIME_LIKE_CONCEPTS.includes(lowerCaseColumn) && !(values[0][column] instanceof Date)) dtypes[column] = lowerCaseColumn;
+                  return dtypes;
+              }, {})
           }
       }
 
@@ -3205,7 +3298,7 @@
 
       function guessKeyConcepts(columns, keyConcepts){
           if(keyConcepts) return keyConcepts;
-          const index = columns.findIndex((f) => TIME_LIKE_CONCEPTS.includes(f));
+          const index = columns.findIndex((f) => TIME_LIKE_CONCEPTS.includes(f.toLowerCase()));
           // +1 because we want to include time itself as well
           return columns.slice(0, index + 1);
       }
@@ -4025,6 +4118,24 @@
       return createModel(filter, ...args)
   }
 
+  function cleanEmptyObjectsAndArrays(obj){
+
+      function notEmpty(arg) {
+          if (arg instanceof Date) return true;
+          return !(arg == null || typeof arg === "object" && Object.keys(arg).length === 0 || Array.isArray(arg) && arg.length === 0);
+      }
+
+      if (Array.isArray(obj)){
+          obj = obj.map( d => cleanEmptyObjectsAndArrays(d) ).filter(notEmpty);
+      } else if (typeof obj === "object"){
+          for (const objKey in obj) {
+              obj[objKey] = cleanEmptyObjectsAndArrays(obj[objKey]);
+              if (!notEmpty(obj[objKey])) delete obj[objKey];
+          }
+      }
+
+      return obj;
+  }
   filter.nonObservable = function (config, parent, id) {
 
       if (!("markers" in config)) config.markers = [];
@@ -4078,19 +4189,9 @@
                   }
               }
           }),
-          delete: mobx.action("deleteFilter", function(marker) {
-              if (Array.isArray(marker)) {
-                  for (const el of marker) this.delete(el);
-                  return;
-              }
-              const cfg = this.config.markers;
-              const key = this.getKey(marker);
-              if (Array.isArray(cfg)) {
-                  removeOnce(cfg, key);
-              } else {
-                  delete cfg[key];
-              }
-              return !this.markers.has(key);
+          delete: mobx.action("deleteFilter", function(markerItem) {
+              this.deleteFromMarkers(markerItem);
+              this.deleteFromDimensionsAllINstatements(markerItem);
           }),
           clear: mobx.action("clearFilter", function() {
               this.config.markers = [];
@@ -4100,6 +4201,83 @@
                   return this.delete(marker);
               else 
                   return this.set(marker);
+          }),
+          deleteFromMarkers: mobx.action("deleteInMarkers", function(markerItem) {
+              if (Array.isArray(markerItem)) {
+                  for (const el of markerItem) this.deleteFromMarkers(el);
+                  return;
+              }
+              const cfg = this.config.markers;
+              const key = this.getKey(markerItem);
+              if (Array.isArray(cfg)) {
+                  removeOnce(cfg, key);
+              } else {
+                  delete cfg[key];
+              }
+              return !this.markers.has(key);
+          }),
+          addToDimensionsFirstINstatement: mobx.action("deleteInDimensions", function(markerItem, path) {
+              if (Array.isArray(markerItem)) {
+                  for (const el of markerItem) this.addToDimensionsFirstINstatement(el);
+                  return;
+              }
+              const cfg = this.config.dimensions;
+              const item = this.getKey(markerItem);
+              let addedOnce = false;
+
+              function findAndAddInArray(array, item){
+                  const index = array.indexOf(item);
+                  if (index == -1 && !addedOnce) {
+                      array.push(item);
+                      addedOnce = true;
+                  }
+              }
+
+              function findAndAddInObject(obj, item, key) {
+                  if (key === "$in")
+                      findAndAddInArray(obj, item);
+                  else if (Array.isArray(obj))
+                      obj.forEach( d => findAndAddInObject(d, item) );
+                  else if (typeof obj === "object")
+                      for (const objKey in obj) findAndAddInObject(obj[objKey], item, objKey);
+              }
+
+              if (path) {
+                  const inArray = path.reduce((a, p)=>{
+                      if (a[p] == null) a[p] = ["$in", "$or", "$and", "$nin"].includes(p) ? [] : {};
+                      return a[p];
+                  }, cfg);
+                  findAndAddInArray(inArray, item);
+              } else {
+                  findAndAddInObject(cfg, item);
+              }
+          }),
+          deleteFromDimensionsAllINstatements: mobx.action("deleteInDimensions", function(markerItem) {
+              if (Array.isArray(markerItem)) {
+                  for (const el of markerItem) this.deleteFromDimensionsAllINstatements(el);
+                  return;
+              }
+              const cfg = this.config.dimensions;
+              const item = this.getKey(markerItem);
+
+              //traverse object in search of an array containing markerItem
+
+              function findAndRemoveInArray(array, item){
+                  const index = array.indexOf(item);
+                  if (index !== -1) array.splice(index, 1);
+              }
+
+              function findAndRemoveInObject(obj, item, key) {
+                  if (key === "$in")
+                      findAndRemoveInArray(obj, item);                
+                  else if (Array.isArray(obj))
+                      obj.forEach( d => findAndRemoveInObject(d, item) );
+                  else if (typeof obj === "object")
+                      for (const objKey in obj) findAndRemoveInObject(obj[objKey], item, objKey);
+              }
+
+              findAndRemoveInObject(cfg, item);
+              cleanEmptyObjectsAndArrays(cfg);
           }),
           getKey(d) {
               return isString(d) ? d : d[Symbol.for('key')];
@@ -4396,8 +4574,29 @@
                   return this.responsePromise.state;
               }
           },
+          get conceptIsEntitySetAndItsDomainIsInSpace() {
+              //example: space ["geo"], concept: "world_4region"
+              return this.concept && this.space && this.conceptProps.concept_type === "entity_set" && this.space.includes(this.conceptProps.domain);
+          },
+          responseAdaptorHack_MoveItToDSource(response){
+              //this adapter handles situations such as getting world_4region property
+              //of geos that are themselves world_4regions 
+              // Jasper: you could have that as an extra layer in datasource even or smth
+              // for any entity query to a domain, add all is--<sets> properties for that domain to the query,
+              // and when result comes back add <set> properties for entities that have is--<set> TRUE
+              // or do that just when you see the key is <domain> and one of the queried properties is a set in the domain.
+              // more specific. so only add it if it's asked for :)
+
+              if (this.conceptIsEntitySetAndItsDomainIsInSpace) {
+                  response.raw.forEach(m => {
+                      m[this.concept] = m[this.concept] ?? m[this.conceptProps.domain];
+                  });
+              }
+              return response;
+          },
           fetchResponse() {
               const promise = this.source.query(this.ddfQuery)
+                  .then(this.responseAdaptorHack_MoveItToDSource.bind(this))
                   .then(response => response.forKey(this.commonSpace));
               return fromPromise(promise);
           },
@@ -4495,8 +4694,73 @@
   };
   entityPropertyDataConfig.decorate = dataConfig.decorate;
 
+  function entityMembershipDataConfig(...args) {
+      return createModel(entityMembershipDataConfig, ...args)
+  }
+
+  const defaults$7 = {
+      exceptions: {}
+  };
+
+  entityMembershipDataConfig.nonObservable = function (cfg, parent) {
+
+      const base = dataConfig.nonObservable(cfg, parent);
+
+      return composeObj(base, {
+
+          get exceptions() {
+              //Exceptions:
+              //For example, we want regions to all go in one facet, but countries to take one facet each:
+              //[China], [USA], [Asia, Africa, Europe]
+              //This is achieved by a config like so:
+              // "facet_row": {
+              //     data: {
+              //       modelType: "entityMembershipDataConfig",
+              //       space: ["geo"],
+              //       concept: "is--",
+              //       exceptions: {"is--country": "geo"},
+              //     }
+              //   },
+              return new Map(Object.entries(this.config.exceptions || defaults$7.exceptions));
+          },
+
+          fetchResponse() {
+              let promise;
+              if (this.concept === "is--")
+                  promise = this.spaceCatalog.then(spaceCatalog => {
+                      const dim = this.space[0];
+
+                      if(this.space.length > 1) 
+                        console.warn(`DataConfig model of type entityMembershipDataConfig only supports one dimension,
+                      but got configured to a multidimensional space:`, this.space.slice());
+
+                      const isnessArray = [];
+
+                      for (const [entityKey, entity] of spaceCatalog[dim].entities.entries()) {
+                          let isness = Object.entries(entity)
+                              .filter(([k,v]) => k.includes("is--") && v)
+                              //support special cases
+                              .map(([k,v]) => this.exceptions.has(k) ? entity[this.exceptions.get(k)] : k);
+                              
+                          //handle situation when entity is not included in any set
+                          if (isness.length === 0) isness = ["is--" + dim];
+
+                          isnessArray.push({[dim]: entity[dim], "is--": isness});
+                      }
+                      return DataFrame(isnessArray, [dim]);
+                  });
+              else
+                  promise = this.source.query(this.ddfQuery)
+                      .then(response => response.forKey(this.commonSpace));
+              return fromPromise(promise);
+          }
+      })
+  };
+  entityMembershipDataConfig.decorate = dataConfig.decorate;
+
   const dataConfigStore = createStore(dataConfig, {
       entityPropertyDataConfig,
+      entityMembershipDataConfig
   });
 
   const scales = {
@@ -4864,6 +5128,10 @@
               });
           },
 
+          get isPattern() {
+              return !!(this.domain && this.domain.length && this.domain.some(color => color && color.length && color[0] == "<"));
+          },
+
           get palette() {
               const config = resolveRef(this.config.palette).value || defaultConfig$7.palette;
               return mobx.observable(palette(config, this));
@@ -5078,7 +5346,7 @@
                   value = this.parseValue(this.config.value);
                   value = this.scale.clampToDomain(value);
               } else {
-                  value = this.scale.domain[0];
+                  value = this.scale.domain.at(-1);
               }
               return value;
           },
@@ -5265,6 +5533,7 @@
 
               return newFrameMap.interpolateOverMembers({ 
                   fields: this.changeBetweenFramesEncodings,
+                  interpolators: this.fieldCustomInterpolators,
                   ammendNewRow: row => row[this.data.concept] = row[encName]
               });
 
@@ -5279,6 +5548,18 @@
                       return enc[prop].data.hasOwnData 
                           && enc[prop].data.space.includes(this.data.concept);
                   })
+          },
+          get fieldCustomInterpolators() {
+              const enc = this.marker.encoding;
+              return this.changeBetweenFramesEncodings.reduce((result, encName) => {
+                  if(!["measure", "time"].includes(enc[encName].data?.conceptProps?.concept_type)
+                      && !enc[encName].scale?.interpolate
+                      && !enc[encName].data?.conceptProps?.interpolate){
+                      //use zero order interpolation instead default d3.interpolate
+                      result[encName] = stepBeforeInterpolator;
+                  }
+                  return result;
+              }, {});
           },
 
           get interval() { 
@@ -5332,10 +5613,13 @@
           get frameKey() {
               return createKeyFn([this.name])({ [this.name]: this.value }) // ({ [this.name]: this.value });
           },
+          get fieldsToInterpolate() {
+              return [this.name, this.data.concept, ...this.changeBetweenFramesEncodings];
+          },
           getInterpolatedFrame(df, step, stepsAround) {
               const keys = Array.from(df.keys());
               const [before, after] = stepsAround.map(step => df.get(keys[step]));
-              return before.interpolateTowards(after, step % 1);
+              return before.interpolateTowards(after, step % 1, this.fieldsToInterpolate, this.fieldCustomInterpolators);
           },
           get stepsAround() {
               return [Math.floor(this.step), Math.ceil(this.step)];
@@ -5443,7 +5727,7 @@
 
   frame.splashMarker = function splashMarker(marker) {
       const frame = marker.encoding.frame;
-      if (frame?.splash) {
+      if (frame?.splash && frame?.config.value) {
           const concept = resolveRef(frame.config.data.concept).value;
           if (typeof concept == "string") {
               let splashConfig = Vizabi.utils.deepclone(marker.config);
@@ -5821,8 +6105,7 @@
               }, {})
           },
           get useConnectedRowsAndColumns(){
-              const {allowEnc, row, column} = this;
-              return row && row.length && column && column.length && allowEnc.length == 2;
+            return !!this.config.useConnectedRowsAndColumns;
           },
           //[{x: x1, y: y1}, {x: x2, y: y1}]
           get rowcolumn() {
@@ -6406,7 +6689,7 @@
       return models;
 
   };
-  vizabi.versionInfo = { version: "1.21.1", build: 1635167169237, package: {"homepage":"http://vizabi.org","name":"@vizabi/core","description":"Vizabi core (data layer)"} };
+  vizabi.versionInfo = { version: "1.24.0", build: 1654768531017, package: {"homepage":"http://vizabi.org","name":"@vizabi/core","description":"Vizabi core (data layer)"} };
   vizabi.mobx = mobx__namespace;
   vizabi.utils = utils$1;
   vizabi.stores = stores;
@@ -6438,5 +6721,5 @@
 
   return vizabi;
 
-})));
+}));
 //# sourceMappingURL=Vizabi.js.map

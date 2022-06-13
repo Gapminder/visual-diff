@@ -1,4 +1,4 @@
-// https://github.com/vizabi/bubblechart#readme v3.12.2 build 1635167354504 Copyright 2021 Gapminder Foundation and contributors
+// https://github.com/vizabi/bubblechart#readme v3.14.2 build 1654768501706 Copyright 2022 Gapminder Foundation and contributors
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('VizabiSharedComponents'), require('mobx')) :
   typeof define === 'function' && define.amd ? define(['VizabiSharedComponents', 'mobx'], factory) :
@@ -16,6 +16,7 @@
       // this.dragLock = false;
 
       this.dragRectangle
+        .filter(event => !event.button)
         .subject(this.dragSubject())
         .on("start", this.drag().start)
         .on("drag", this.drag().go)
@@ -54,8 +55,8 @@
         }
 
         return {
-          x: d3.pointer(event)[0],
-          y: d3.pointer(event)[1]
+          x: d3.pointer(event, this)[0],
+          y: d3.pointer(event, this)[1]
         };
       };
     }
@@ -80,8 +81,8 @@
 
           // self.dragLock = true;
           this.origin = {
-            x: d3.pointer(event)[0],
-            y: d3.pointer(event)[1]
+            x: d3.pointer(event, this)[0],
+            y: d3.pointer(event, this)[1]
           };
           _this.DOM.zoomRect.classed("vzb-invisible", false);
         },
@@ -110,8 +111,8 @@
             .classed("vzb-invisible", true);
 
           this.target = {
-            x: d3.pointer(event)[0],
-            y: d3.pointer(event)[1]
+            x: d3.pointer(event, this)[0],
+            y: d3.pointer(event, this)[1]
           };
           if (Math.abs(this.origin.x - this.target.x) < 10 || Math.abs(this.origin.y - this.target.y) < 10) return;
 
@@ -647,7 +648,7 @@
       let ratio = transform.k;
       const pan = [transform.x, transform.y];
 
-      const mouse = d3.pointer(event);
+      const mouse = d3.pointer(event, this.zoomSelection.node());
       let k = Math.log(ratio) / Math.LN2;
 
       //change factor direction based on the input. default is no direction supplied
@@ -944,68 +945,69 @@
       }];
 
       config.template = `
-      <svg class="vzb-bubblechart-svg vzb-bubblechart-svg-back vzb-export">
-          <g class="vzb-bc-graph">
-              <g class="vzb-bc-date"></g>
-              <svg class="vzb-bc-axis-x"><g></g></svg>
-              <svg class="vzb-bc-axis-y"><g></g></svg>
-              <line class="vzb-bc-projection-x"></line>
-              <line class="vzb-bc-projection-y"></line>
-          </g>
-      </svg>
-      <svg class="vzb-bubblechart-svg vzb-bubblechart-svg-main vzb-export">
-          <g class="vzb-bc-graph">
-              <g class="vzb-bc-axis-x-title"><text></text></g>
-              <g class="vzb-bc-axis-x-info vzb-noexport"></g>
+      <svg class="vzb-bubblechart-svg vzb-export">
+          <svg class="vzb-bubblechart-svg-back">
+              <g class="vzb-bc-graph">
+                  <g class="vzb-bc-date"></g>
+                  <svg class="vzb-bc-axis-x"><g></g></svg>
+                  <svg class="vzb-bc-axis-y"><g></g></svg>
+                  <line class="vzb-bc-projection-x"></line>
+                  <line class="vzb-bc-projection-y"></line>
+              </g>
+          </svg>
+          <svg class="vzb-bubblechart-svg-main">
+              <g class="vzb-bc-graph">
+                  <g class="vzb-bc-axis-x-title"><text></text></g>
+                  <g class="vzb-bc-axis-x-info vzb-noexport"></g>
 
-              <g class="vzb-bc-axis-y-title"><text></text></g>
-              <g class="vzb-bc-axis-y-info vzb-noexport"></g>
-              <svg class="vzb-bc-bubbles-crop">
-                  <g class="vzb-zoom-selection"></g>
-                  <rect class="vzb-bc-eventarea"></rect>
-                  <g class="vzb-bc-trails"></g>
-                  <g class="vzb-bc-bubbles"></g>
-                  <rect class="vzb-bc-forecastoverlay vzb-hidden" x="0" y="0" width="100%" height="100%" fill="url(#vzb-bc-pattern-lines)" pointer-events='none'></rect>
-              </svg>
+                  <g class="vzb-bc-axis-y-title"><text></text></g>
+                  <g class="vzb-bc-axis-y-info vzb-noexport"></g>
+                  <svg class="vzb-bc-bubbles-crop">
+                      <g class="vzb-zoom-selection"></g>
+                      <rect class="vzb-bc-eventarea"></rect>
+                      <g class="vzb-bc-trails"></g>
+                      <g class="vzb-bc-bubbles"></g>
+                      <rect class="vzb-bc-forecastoverlay vzb-hidden" x="0" y="0" width="100%" height="100%" fill="url(#vzb-bc-pattern-lines-${config.id})" pointer-events='none'></rect>
+                  </svg>
 
-              <g class="vzb-bc-axis-y-subtitle"><text></text></g>
-              <g class="vzb-bc-axis-x-subtitle"><text></text></g>
-              <g class="vzb-bc-axis-s-title"><text></text></g>
-              <g class="vzb-bc-axis-c-title"><text></text></g>
+                  <g class="vzb-bc-axis-y-subtitle"><text></text></g>
+                  <g class="vzb-bc-axis-x-subtitle"><text></text></g>
+                  <g class="vzb-bc-axis-s-title"><text></text></g>
+                  <g class="vzb-bc-axis-c-title"><text></text></g>
 
-              <rect class="vzb-bc-zoom-rect"></rect>
-          </g>
-          <g class="vzb-datawarning-button vzb-noexport"></g>
+                  <rect class="vzb-bc-zoom-rect"></rect>
+              </g>
+              <g class="vzb-datawarning-button vzb-noexport"></g>
+          </svg>
+          <svg class="vzb-bubblechart-svg-front">
+              <g class="vzb-bc-graph">
+                  <svg class="vzb-bc-bubbles-crop">
+                      <g class="vzb-bc-decorations">
+                          <line class="vzb-bc-line-equal-xy vzb-invisible"></line>
+                          <g class="vzb-bc-x-axis-groups"></g>
+                      </g>   
+                      <g class="vzb-bc-lines"></g>
+                      <g class="vzb-bc-bubble-crown vzb-hidden">
+                          <circle class="vzb-crown-glow"></circle>
+                          <circle class="vzb-crown"></circle>
+                      </g>        
+                  </svg>
+                  <svg class="vzb-bc-labels-crop">
+                      <g class="vzb-bc-labels"></g>
+                  </svg>
+              </g>
+          </svg>
+          <svg width="0" height="0">
+              <defs>
+                  <filter class="vzb-noexport" id="vzb-glow-filter-${config.id}" x="-50%" y="-50%" width="200%" height="200%">
+                      <feGaussianBlur in="SourceGraphic" stdDeviation="2"></feGaussianBlur>
+                  </filter>
+                  <pattern class="vzb-noexport" id="vzb-bc-pattern-lines-${config.id}" x="0" y="0" patternUnits="userSpaceOnUse" width="50" height="50" viewBox="0 0 10 10"> 
+                      <path d='M-1,1 l2,-2M0,10 l10,-10M9,11 l2,-2' stroke='black' stroke-width='3' opacity='0.08'/>
+                  </pattern> 
+              </defs>
+          </svg>
       </svg>
-      <svg class="vzb-bubblechart-svg vzb-bubblechart-svg-front vzb-export">
-          <g class="vzb-bc-graph">
-              <svg class="vzb-bc-bubbles-crop">
-                  <g class="vzb-bc-decorations">
-                      <line class="vzb-bc-line-equal-xy vzb-invisible"></line>
-                      <g class="vzb-bc-x-axis-groups"></g>
-                  </g>   
-                  <g class="vzb-bc-lines"></g>
-                  <g class="vzb-bc-bubble-crown vzb-hidden">
-                      <circle class="vzb-crown-glow"></circle>
-                      <circle class="vzb-crown"></circle>
-                  </g>        
-              </svg>
-              <svg class="vzb-bc-labels-crop">
-                  <g class="vzb-bc-labels"></g>
-              </svg>
-          </g>
-      </svg>
-      <svg width="0" height="0">
-          <defs>
-              <filter id="vzb-glow-filter" x="-50%" y="-50%" width="200%" height="200%">
-                  <feGaussianBlur in="SourceGraphic" stdDeviation="2"></feGaussianBlur>
-              </filter>
-            <pattern id="vzb-bc-pattern-lines" x="0" y="0" patternUnits="userSpaceOnUse" width="50" height="50" viewBox="0 0 10 10"> 
-                <path d='M-1,1 l2,-2M0,10 l10,-10M9,11 l2,-2' stroke='black' stroke-width='3' opacity='0.08'/>
-              </pattern> 
-          </defs>
-      </svg>
-      <!-- This could possibly be another component -->
       <div class="vzb-tooltip vzb-hidden vzb-tooltip-mobile"></div>
     `;
 
@@ -1025,7 +1027,8 @@
         zoomRect: this.element.select(".vzb-bc-zoom-rect"),
         eventArea: this.element.select(".vzb-bc-eventarea"),
         forecastOverlay: this.element.select(".vzb-bc-forecastoverlay"),
-        tooltipMobile: this.element.select(".vzb-tooltip-mobile")
+        tooltipMobile: this.element.select(".vzb-tooltip-mobile"),
+        defs: this.element.select("defs")
       };
       this.DOM.chartSvg.select(".vzb-bc-graph").call(graph => 
         Object.assign(this.DOM, {
@@ -1070,7 +1073,7 @@
 
       //set filter
       this.DOM.bubbleCrown.selectAll(".vzb-crown-glow")
-        .attr("filter", "url(" + location.pathname + "#vzb-glow-filter)");
+        .attr("filter", `url(${location.pathname}#vzb-glow-filter-${this.id})`);
 
       this._date = this.findChild({type: "DateTimeBackground"});
       this._labels = this.findChild({type: "Labels"});
@@ -1089,6 +1092,7 @@
       this.draggingNow = null;
 
       this.hoverBubble = false;
+      this.__lastStep = 0;
 
       const _this = this;
       //keyboard listeners
@@ -1209,10 +1213,12 @@
       //    this.addReaction(this._resetZoomMinMaxXReaction, this._resetZoomMinMaxX);
       //    this.addReaction(this._resetZoomMinMaxYReaction, this._resetZoomMinMaxY);
       this.addReaction(this._updateOpacity);
+      this.addReaction(this.updateColorPatterns);
       this.addReaction(this._updateShowYear);
       this.addReaction(this._updateYear);
       this.addReaction(this.drawData);
       this.addReaction(this._zoomToMarkerMaxMin);
+      this.addReaction(this.redrawData);
 
       this.addReaction(this._selectDataPoints);
       this.addReaction(this._highlightDataPoints);
@@ -1229,6 +1235,41 @@
       //this.redrawData();
     }
 
+    updateColorPatterns() {
+      if (this.MDL.color.scale.isPattern) {
+        const colorConcept = this.MDL.color.data.concept;
+        this.DOM.defs.selectAll(".flag")
+          .data(this.MDL.color.data.domainData, d => d[0])
+          .enter()
+          .append("pattern")
+          .attr("id", d => `flag-${d[0]}-${this.id}`)
+          .attr("class", "flag")
+          .attr("width", "100%")
+          .attr("height", "100%")
+          .attr("patternContentUnits", "objectBoundingBox")
+          .html(d => d[1][colorConcept])
+          .each(function() {
+            const svg = d3.select(this).select("svg");
+            if (svg.empty()) return;
+            
+            if (!svg.attr("viewBox"))
+              svg.attr("viewBox", `0 0 ${svg.attr("width")} ${svg.attr("height")}`);
+
+            // xMidYMid: center the image in the circle
+            // slice: scale the image to fill the circle
+            if (!svg.attr("preserveAspectRatio"))
+              svg.attr("preserveAspectRatio", "xMidYMid slice");
+
+            svg.attr("width", 1).attr("height", 1);
+          });
+            // .attr("xlink:href", function(d) {
+            //   return "flags/" + d.CountryCode + ".svg";
+            // });
+      } else {
+        this.DOM.defs.selectAll(".flag").remove();
+      }
+    }
+
     _updateShowYear() {
       this.DOM.date.classed("vzb-hidden", !this.ui.timeInBackground);
     }
@@ -1238,11 +1279,20 @@
       this._date.setText(this.MDL.frame.value, duration);    
     }
 
+    __getColor(key, valueC) {
+      return valueC != null ? (this.MDL.color.scale.isPattern ? `url(#flag-${key}-${this.id})` : this.cScale(valueC)) : COLOR_WHITEISH;
+    }
+
     _createAndDeleteBubbles() {
       const _this = this;
       const duration = this._getDuration();
       const transition = this._getTransition(duration);
       const data = this.__dataProcessed;
+      let trailRedrawDate;
+
+      mobx.runInAction(()=>{
+        trailRedrawDate = this.MDL.frame.stepScale.invert(Math.min(this.__lastStep, this.__lastStep = this.MDL.frame.step << 0) - 1);
+      });
 
       this.bubbles = this.DOM.bubbleContainer.selectAll(".vzb-bc-entity")
         .data(this.__dataProcessed, d => d[Symbol.for("key")])
@@ -1309,7 +1359,7 @@
               d.r = VizabiSharedComponents.LegacyUtils.areaToRadius(_this.sScale(valueS || 0));
               const scaledX = _this.xScale(valueX);
               const scaledY = _this.yScale(valueY);
-              const scaledC = valueC != null ? _this.cScale(valueC) : COLOR_WHITEISH;
+              const scaledC = _this.__getColor(d[Symbol.for(isTrail ? "trailHeadKey" : "key")], valueC);
         
               if (!duration || !headTrail) {
                 circle
@@ -1339,10 +1389,10 @@
                     .attr("x1", scaledX)
                     .attr("y1", scaledY)
                     .attr("x2", scaledX0)
-                    .attr("y2", scaledY0)
-                    .style("stroke", scaledC)
+                    .attr("y2", scaledY0)                  
                     .attr("stroke-dasharray", Math.abs(scaledX - scaledX0) + Math.abs(scaledY - scaledY0))
-                    .attr("stroke-dashoffset", -d.r);
+                    .attr("stroke-dashoffset", -d.r)
+                    .style("stroke", _this.MDL.color.scale.isPattern ? null : scaledC);
                 }
               }
         
@@ -1364,13 +1414,11 @@
               const isTrail = isTrailBubble(d);
               const isExtrapolated = d[Symbol.for("extrapolated")];
               const dataNext = data[index + 1] || {};
-              const dataNext2 = data[index + 2] || {};
               const headTrail = isTrail && !dataNext[Symbol.for("trailHeadKey")];
-              const headTrail2 = isTrail && !dataNext2[Symbol.for("trailHeadKey")];
         
               const valueS = d.size;
               d.r = VizabiSharedComponents.LegacyUtils.areaToRadius(_this.sScale(valueS || 0));
-              if (isTrail && !headTrail && !headTrail2) return;
+              if (isTrail && d["frame"] < trailRedrawDate) return;
         
               const valueX = d[_this._alias("x")];
               const valueY = d[_this._alias("y")];
@@ -1381,21 +1429,26 @@
               //view.classed("vzb-hidden", d.hidden);
               const scaledX = _this.xScale(valueX);
               const scaledY = _this.yScale(valueY);
-              const scaledC = valueC != null ? _this.cScale(valueC) : COLOR_WHITEISH;
+              const scaledC = _this.__getColor(d[Symbol.for(isTrail ? "trailHeadKey" : "key")], valueC);
         
+              const group = d3.select(this);
               if (!duration || !headTrail) {
-                const view = duration && !isTrail ?
-                  d3.select(this).transition(transition)
-                  :
-                  d3.select(this).interrupt();
-
-                view.select("circle")
-                  .attr("r", d.r)
-                  .attr("fill", scaledC)
-                  .attr("cy", scaledY)
-                  .attr("cx", scaledX);
+                const circle = group.select("circle");
+                if (duration && !isTrail) {
+                  circle.transition(transition)
+                    .attr("r", d.r)
+                    .attr("fill", scaledC)
+                    .attr("cy", scaledY)
+                    .attr("cx", scaledX);
+                } else {
+                  circle.interrupt()
+                    .attr("r", d.r)
+                    .attr("fill", scaledC)
+                    .attr("cy", scaledY)
+                    .attr("cx", scaledX);
+                }
                   
-                const diagonalLine = d3.select(this).select(".vzb-diagonal-line");
+                const diagonalLine = group.select(".vzb-diagonal-line");
                 diagonalLine
                   .classed("vzb-hidden", !isExtrapolated);
                 if(isExtrapolated){
@@ -1416,7 +1469,7 @@
                 
                 //trail line
                 if (isTrail) {
-                  const trailLine = d3.select(this).select(".vzb-trail-line");
+                  const trailLine = group.select(".vzb-trail-line");
                   const scaledX0 = _this.xScale(dataNext[_this._alias("x")]);
                   const scaledY0 = _this.yScale(dataNext[_this._alias("y")]);
                   
@@ -1437,7 +1490,7 @@
                   }
         
                   trailLine
-                    .style("stroke", scaledC)
+                    .style("stroke", _this.MDL.color.scale.isPattern ? null : scaledC)
                     .attr("stroke-dasharray", Math.abs(scaledX - scaledX0) + Math.abs(scaledY - scaledY0))
                     .attr("stroke-dashoffset", -d.r);
                 }
@@ -1471,18 +1524,21 @@
 
 
     redrawData(duration) {
-      this.services.layout.size;
-      this.MDL.x.scale.type;
-      this.MDL.y.scale.type;
+      //this.services.layout.size;
+      //this.MDL.x.scale.type;
+      //this.MDL.y.scale.type;
       this.MDL.color.scale.type;
       this.MDL.size.scale.type;
       this.MDL.size.scale.extent;
 
       const _this = this;
       const data = this.__dataProcessed;
+      const transition = this._getTransition(duration);
 
       if (this.bubbles) this.bubbles.each(function(d, index) {
         const isTrail = isTrailBubble(d);
+        const dataNext = data[index + 1] || {};
+        const headTrail = isTrail && !dataNext[Symbol.for("trailHeadKey")];
         const isExtrapolated = d[Symbol.for("extrapolated")];
 
         const valueX = d[_this._alias("x")];
@@ -1493,26 +1549,37 @@
         d.r = VizabiSharedComponents.LegacyUtils.areaToRadius(_this.sScale(valueS || 0));
         const scaledX = _this.xScale(valueX);
         const scaledY = _this.yScale(valueY);
-        const scaledC = valueC != null ? _this.cScale(valueC) : COLOR_WHITEISH;
+        const scaledC = _this.__getColor(d[Symbol.for(isTrail ? "trailHeadKey" : "key")], valueC);
 
-        const view = duration ? 
-          d3.select(this)
-            .transition()
-            .duration(duration)
-          : d3.select(this).interrupt();
+        const group = d3.select(this);
 
-        view.select("circle")
-          .attr("r", d.r)
-          .attr("fill", scaledC)
-          .attr("cy", scaledY)
-          .attr("cx", scaledX);
+        if (duration && headTrail) {
+          group.style("opacity", 0)
+            .transition().delay(duration).duration(0)
+            .style("opacity", d[Symbol.for("opacity")]);
+        }
 
-        const diagonalLine = d3.select(this).select(".vzb-diagonal-line");
+        const circle = group.select("circle");                            
+        if (duration && !headTrail) {
+          circle.transition(transition)
+            .attr("r", d.r)
+            .attr("fill", scaledC)
+            .attr("cy", scaledY)
+            .attr("cx", scaledX);
+        } else {
+          circle.interrupt()
+            .attr("r", d.r)
+            .attr("fill", scaledC)
+            .attr("cy", scaledY)
+            .attr("cx", scaledX);
+        }
+
+        const diagonalLine = group.select(".vzb-diagonal-line");
         diagonalLine
           .classed("vzb-hidden", !isExtrapolated);
         if(isExtrapolated){
-          if (duration){
-            diagonalLine.transition().duration(duration)
+          if (duration && !headTrail){
+            diagonalLine.transition(transition)
               .attr("x1", scaledX + d.r/Math.sqrt(2))
               .attr("y1", scaledY + d.r/Math.sqrt(2))
               .attr("x2", scaledX - d.r/Math.sqrt(2))
@@ -1528,11 +1595,10 @@
         
 
         if (isTrail) {
-          const trailLine = duration ? 
-            d3.select(this).select(".vzb-trail-line")
-              .transition()
-              .duration(duration)
-            : d3.select(this).select(".vzb-trail-line").interrupt();
+          const trailLine = (duration  && !headTrail) ? 
+            group.select(".vzb-trail-line")
+              .transition(transition)
+            : group.select(".vzb-trail-line").interrupt();
 
           const dataNext = data[index + 1];
           const scaledX0 = _this.xScale(dataNext[_this._alias("x")]);
@@ -1543,13 +1609,13 @@
             .attr("y1", scaledY)
             .attr("x2", scaledX0)
             .attr("y2", scaledY0)
-            .style("stroke", scaledC)
+            .style("stroke", _this.MDL.color.scale.isPattern ? null : scaledC)
             .attr("stroke-dasharray", Math.abs(scaledX - scaledX0) + Math.abs(scaledY - scaledY0))
             .attr("stroke-dashoffset", -d.r);
         }
       });
 
-      _this._updateLabels();
+      mobx.runInAction(() => _this._updateLabels(duration));
     }
 
     __getZoomed(type, zoomed, domain) {
@@ -1767,10 +1833,6 @@
       const infoElHeight = this.profileConstants.infoElHeight;
       const xAxisTitleBottomMargin = this.profileConstants.xAxisTitleBottomMargin;
 
-      //labels
-      this._labels.setCloseCrossHeight(_this.profileConstants.infoElHeight * 1.2);
-      this._labels.setTooltipFontSize(_this.profileConstants.infoElHeight + "px");
-      
       //stage
       const height = this.height = (this.elementHeight - margin.top - margin.bottom) || 0;
       const width = this.width = (this.elementWidth - margin.left * this.profileConstants.leftMarginRatio - margin.right) || 0;
@@ -1878,10 +1940,12 @@
         
         yTitleEl.select("text").text(this.strings.title_short.Y + (compl.Y ? " · " + compl.Y : "") + " ")
           .append("tspan")
+          .classed("vzb-noexport", true)
           .style("font-size", (infoElHeight * 0.7) + "px")
           .text("▼");
         xTitleEl.select("text").text(this.strings.title_short.X + (compl.X ? " · " + compl.X : "") + " ")
           .append("tspan")
+          .classed("vzb-noexport", true)
           .style("font-size", (infoElHeight * 0.7) + "px")
           .text("▼");
       } else {
@@ -2266,10 +2330,12 @@
       if (highlightedFilter.markers.size === 1) {
         const highlightedKey = highlightedFilter.markers.keys().next().value;
         const d = Object.assign(this.model.dataMap.getByStr(highlightedKey));
+        const selectedKey = d[Symbol.for("trailHeadKey")] || d[Symbol.for("key")];
+
         const x = _this.xScale(d[_this._alias("x")]);
         const y = _this.yScale(d[_this._alias("y")]);
         const s = d.r;
-        const c = d.color != null ? this.cScale(d.color) : COLOR_WHITEISH;
+        const c = _this.__getColor(selectedKey, d.color);
         let entityOutOfView = false;
 
         ////const titles = _this._formatSTitleValues(values.size[utils.getKey(d, dataKeys.size)], values.color[utils.getKey(d, dataKeys.color)]);
@@ -2279,7 +2345,6 @@
         }
 
         //show tooltip
-        const selectedKey = d[Symbol.for("trailHeadKey")] || d[Symbol.for("key")];
         // const trailShow = this.MDL.trail.show;
         // const trailStarts = this.MDL.trail.starts;
         // const trailGroupDim = this.MDL.trail.groupDim;
@@ -2290,7 +2355,7 @@
         let text = "";
         
         text = isSelected ? 
-          !trailShow || isTailTrail || (!isTrail && !this.hoverBubble) ? "": this.localise(d.label[trailGroupDim])
+          !trailShow || isTailTrail || (!isTrail && !this.hoverBubble) ? "": this.localise(d[trailGroupDim])
           : 
           this.__labelWithoutFrame(d);
         
@@ -2432,7 +2497,7 @@
       }
     }
     
-    _updateLabels() {
+    _updateLabels(duration) {
       //console.log("updateLabels");
 
       const selectedFilter = this.MDL.selected.data.filter;
@@ -2459,7 +2524,7 @@
         cache.valueS0 = d.size;
         cache.initTextBBox = null;
         cache.initFontSize = null;
-        this._labels.updateLabel({ [Symbol.for("key")]: key }, null, null, null, null, null, null, d.size_label);
+        this._labels.updateLabel({ [Symbol.for("key")]: key }, null, null, null, null, null, null, d.size_label, duration);
       }
     }
 
@@ -2552,8 +2617,8 @@
         placeholder: ".vzb-repeater",
         model: marker,
         options: {
-          ComponentClass: VizabiBubbleChart,
-          componentCssName: "vzb-bubblechart"
+          repeatedComponent: VizabiBubbleChart,
+          repeatedComponentCssClass: "vzb-bubblechart"
         },
         name: "chart",
       },{
@@ -2605,7 +2670,7 @@
       }];
 
       config.template = `
-      <div class="vzb-repeater vzb-bubblechart"></div>
+      <div class="vzb-repeater"></div>
       <div class="vzb-animationcontrols">
         <div class="vzb-timeslider"></div>
         <div class="vzb-speedslider"></div>
@@ -2684,7 +2749,7 @@
     }
   });
 
-  BubbleChart.versionInfo = { version: "3.12.2", build: 1635167354504, package: {"homepage":"https://github.com/vizabi/bubblechart#readme","name":"@vizabi/bubblechart","description":"Vizabi bubble chart"}, sharedComponents: VizabiSharedComponents.versionInfo};
+  BubbleChart.versionInfo = { version: "3.14.2", build: 1654768501706, package: {"homepage":"https://github.com/vizabi/bubblechart#readme","name":"@vizabi/bubblechart","description":"Vizabi bubble chart"}, sharedComponents: VizabiSharedComponents.versionInfo};
 
   return BubbleChart;
 

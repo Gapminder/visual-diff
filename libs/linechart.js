@@ -1,4 +1,4 @@
-// https://github.com/vizabi/linechart#readme v3.7.5 build 1635167409425 Copyright 2021 Gapminder Foundation and contributors
+// https://github.com/vizabi/linechart#readme v3.8.2 build 1654769848957 Copyright 2022 Gapminder Foundation and contributors
 (function (global, factory) {
   typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('VizabiSharedComponents'), require('mobx')) :
   typeof define === 'function' && define.amd ? define(['VizabiSharedComponents', 'mobx'], factory) :
@@ -109,7 +109,7 @@
               <g class="vzb-lc-axis-x-title">
                 <text></text>
               </g>
-              <g class="vzb-lc-axis-y-info"></g>
+              <g class="vzb-lc-axis-y-info vzb-noexport"></g>
 
               <g class="no-data-message vzb-hidden">                  
                   <text></text>
@@ -127,13 +127,13 @@
               </filter-->
 
           </g>
-          <rect class="vzb-lc-forecastoverlay vzb-hidden" x="0" y="0" width="100%" height="100%" fill="url(#vzb-lc-pattern-lines)" pointer-events='none'></rect>
+          <rect class="vzb-lc-forecastoverlay vzb-hidden" x="0" y="0" width="100%" height="100%" fill="url(#vzb-lc-pattern-lines-${config.id})" pointer-events='none'></rect>
           <g class="vzb-datawarning-button vzb-noexport"></g>
       </svg>
       <div class="vzb-tooltip vzb-hidden"></div>
       <svg>
         <defs>
-            <pattern id="vzb-lc-pattern-lines" x="0" y="0" patternUnits="userSpaceOnUse" width="50" height="50" viewBox="0 0 10 10"> 
+            <pattern class="vzb-noexport" id="vzb-lc-pattern-lines-${config.id}" x="0" y="0" patternUnits="userSpaceOnUse" width="50" height="50" viewBox="0 0 10 10"> 
                 <path d='M-1,1 l2,-2M0,10 l10,-10M9,11 l2,-2' stroke='black' stroke-width='3' opacity='0.08'/>
             </pattern> 
         </defs>
@@ -958,7 +958,7 @@
       } = this.MDL;
 
 
-      const mouse = d3.pointer(event);
+      const mouse = d3.pointer(event, _this.element.node());
 
       let resolvedTime = _this.xScale.invert(mouse[0] - _this.profileConstants.margin.left);
       if (_this.time - resolvedTime < 0) {
@@ -1000,8 +1000,8 @@
         //position tooltip
         tooltip
         //.style("right", (_this.cropWidth - scaledTime + _this.marginRightAdjusted ) + "px")
-          .style("left", (scaledTime + _this.margin.left) + "px")
-          .style("bottom", (_this.cropHeight - scaledValue + _this.margin.bottom) + "px")
+          .style("left", (scaledTime + _this.profileConstants.margin.left) + "px")
+          .style("bottom", (_this.cropHeight - scaledValue + _this.profileConstants.margin.bottom) + "px")
           .text(_this.yAxis.tickFormat()(resolvedValue))
           .classed("vzb-hidden", false);
       }
@@ -1225,8 +1225,8 @@
         placeholder: ".vzb-repeater",
         model: marker,
         options: {
-          ComponentClass: VizabiLineChart,
-          componentCssName: "vzb-linechart"
+          repeatedComponent: VizabiLineChart,
+          repeatedComponentCssClass: "vzb-linechart"
         },
         name: "chart"
       },{
@@ -1278,7 +1278,7 @@
       }];
 
       config.template = `
-      <div class="vzb-repeater vzb-linechart"></div>
+      <div class="vzb-repeater"></div>
       <div class="vzb-animationcontrols">
         <div class="vzb-timeslider"></div>
         <div class="vzb-speedslider"></div>
@@ -1363,7 +1363,7 @@
     }
   });
 
-  LineChart.versionInfo = { version: "3.7.5", build: 1635167409425, package: {"homepage":"https://github.com/vizabi/linechart#readme","name":"@vizabi/linechart","description":"Vizabi line chart"}, sharedComponents: VizabiSharedComponents.versionInfo};
+  LineChart.versionInfo = { version: "3.8.2", build: 1654769848957, package: {"homepage":"https://github.com/vizabi/linechart#readme","name":"@vizabi/linechart","description":"Vizabi line chart"}, sharedComponents: VizabiSharedComponents.versionInfo};
 
   return LineChart;
 
